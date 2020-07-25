@@ -4,7 +4,63 @@ import os
 import struct
 
 
+water_value = -99
+water_buffer_value = 100
+
+
+# 判断是否超出数据范围
+def in_data(x, y, x_size, y_size):
+    # 左侧超出
+    if x < 0:
+        return False
+    # 上方超出
+    if y < 0:
+        return False
+    # 右侧超出
+    if x > x_size:
+        return False
+    # 下方超出
+    if y > y_size:
+        return False
+    return True
+
+
+# 生成水体外包围
+def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
+    res_x_size = dataset_res.RasterXSize
+    res_y_size = dataset_res.RasterYSize
+
+    re_data_value = int.from_bytes(dataset_re.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1), 'little', signed=True)
+    not_recode_result = re_data_value != water_buffer_value
+    in_water_data = in_data(res_xoff, res_yoff, res_x_size, res_y_size)
+    in_water = in_water_data
+    if in_water_data:
+        data_value = int.from_bytes(dataset_res.GetRasterBand(1).ReadRaster(res_xoff, res_yoff, 1, 1), 'little', signed=True)
+        in_water = data_value != water_value
+    else:
+        in_water = True
+    if not_recode_result and in_water:
+        dataset_re.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("B", water_buffer_value))
+
+
+# 3*3网格遍历
+def buffer_search(res_xoff, res_yoff, re_xoff, re_yoff):
+    water_buffer(res_xoff - 1, res_yoff + 1, re_xoff - 1, re_yoff + 1)
+    water_buffer(res_xoff, res_yoff + 1, re_xoff, re_yoff + 1)
+    water_buffer(res_xoff + 1, res_yoff + 1, re_xoff + 1, re_yoff + 1)
+
+    water_buffer(res_xoff - 1, res_yoff, re_xoff - 1, re_yoff)
+    water_buffer(res_xoff + 1, res_yoff, re_xoff + 1, re_yoff)
+
+    water_buffer(res_xoff - 1, res_yoff - 1, re_xoff - 1, re_yoff - 1)
+    water_buffer(res_xoff, res_yoff - 1, re_xoff, re_yoff - 1)
+    water_buffer(res_xoff + 1, res_yoff - 1, re_xoff + 1, re_yoff - 1)
+
+
+# 参数分别为： 工作空间 水体数据 流向数据 汇流累积量数据
 def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif):
+    global dataset_res, dataset_dir, dataset_acc, dataset_re
+
     result_path = base_path + "/result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)
@@ -20,39 +76,45 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif):
 
     res_geotransform = dataset_res.GetGeoTransform()
     dir_geotransform = dataset_dir.GetGeoTransform()
-    band = dataset_res.GetRasterBand(1)
 
-    cols = dataset_res.RasterXSize
-    rows = dataset_res.RasterYSize
+    res_x_size = dataset_res.RasterXSize
+    res_y_size = dataset_res.RasterYSize
     count = 0
 
-    dir_tl_x = dir_geotransform[0]
-    dir_tl_y = dir_geotransform[3]
+    full_geotransform = dir_geotransform
+
+    full_tl_x = full_geotransform[0]
+    full_tl_y = full_geotransform[3]
 
     fileformat = "GTiff"
     driver = gdal.GetDriverByName(fileformat)
     result_data_path = result_path + "/" + "result.tif"
     dataset_re = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize)
-    dataset_re.SetGeoTransform(dir_geotransform)
+    dataset_re.SetGeoTransform(full_geotransform)
     dataset_re.SetProjection(dataset_dir.GetProjection())
 
-    for i in range(rows):
-        for j in range(cols):
+    for i in range(res_y_size):
+        for j in range(res_x_size):
             count += 1
-            px = res_geotransform[0] + j * res_geotransform[1] + i * res_geotransform[2]
-            py = res_geotransform[3] + j * res_geotransform[4] + i * res_geotransform[5]
-            # print("{} ({}, {})".format(count, px, py))
-            scan_data = band.ReadRaster(j, i, 1, 1)
+            res_px = res_geotransform[0] + j * res_geotransform[1] + i * res_geotransform[2]
+            res_py = res_geotransform[3] + j * res_geotransform[4] + i * res_geotransform[5]
+            # print("{} ({}, {})".format(count, res_xoff, res_yoff))
+            scan_data = dataset_res.GetRasterBand(1).ReadRaster(j, i, 1, 1)
             scan_value = int.from_bytes(scan_data, 'little', signed=True)
-            if scan_value == -99:
-                dir_xoff = int((px-dir_tl_x)/dir_geotransform[1] + 0.5)
-                dir_yoff = int((py-dir_tl_y)/dir_geotransform[5] + 0.5)
-                dataset_re.GetRasterBand(1).WriteRaster(dir_xoff, dir_yoff, 1, 1, struct.pack("B", 99))
-                print(scan_value)
-    # print("First location: {},{}".format(first_x, first_y))
 
+            # 若是水体内的像元
+            if scan_value == water_value:
+                # 获取当前水体像元在结果数据中的索引
+                re_xoff = int((res_px-full_tl_x)/full_geotransform[1] + 0.5)
+                re_yoff = int((res_py-full_tl_y)/full_geotransform[5] + 0.5)
+                # 使用3*3区域生成水体外包围像元集
+                buffer_search(j, i, re_xoff, re_yoff)
+                print(scan_value)
+
+    # print("First location: {},{}".format(first_x, first_y))
     dataset_res = None
     dataset_dir = None
+    dataset_acc = None
     dataset_re = None
 
 
