@@ -50,12 +50,14 @@ def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
         not_in_water = True
     if not_recode_result and not_in_water:
         water_buffers.append((re_xoff, re_yoff))
-        dataset_re.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_buffer_value))
         acc_data = dataset_acc.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1)
         acc_data_value = struct.unpack('f', acc_data)[0]
         if acc_data_value >= river_th:
             dataset_re.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", int(acc_data_value)))
             print(acc_data_value)
+        else:
+            dataset_re.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_buffer_value))
+
 
 
 # 3*3网格遍历
