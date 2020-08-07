@@ -6,10 +6,11 @@ import struct
 dataset_res = None
 dataset_dir = None
 dataset_acc = None
-dataset_re = None
+
+dataset_ol = one
 river_th = 0
 
-# 一像元的缓冲区
+# 一像元宽的外包围线
 water_buffers = []
 
 
@@ -36,28 +37,34 @@ def in_data(x, y, x_size, y_size):
 
 # 生成水体外包围
 def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
-    global dataset_res, dataset_dir, dataset_acc, dataset_re, river_th, water_buffers
+    global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th, water_buffers
     res_x_size = dataset_res.RasterXSize
     res_y_size = dataset_res.RasterYSize
 
-    re_data_value = int.from_bytes(dataset_re.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1), 'little', signed = True)
-    not_recode_result = re_data_value == 0
+    ol_data_value = int.from_bytes(dataset_ol.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1), 'little', signed = True)
+    # 判断是否已经记录
+    not_recode_result = ol_data_value == 0
+    # 判断是否在水体数据范围内
     in_water_data = in_data(res_xoff, res_yoff, res_x_size, res_y_size)
+    # 若在水体数据中进一步判断是否为水体内像元
     if in_water_data:
         data_value = int.from_bytes(dataset_res.GetRasterBand(1).ReadRaster(res_xoff, res_yoff, 1, 1), 'little', signed = True)
         not_in_water = data_value != water_value
     else:
         not_in_water = True
+    # 若不是水体像元且未记录则记录
     if not_recode_result and not_in_water:
+        # 添加缓冲区数组记录
         water_buffers.append((re_xoff, re_yoff))
+        # 获取该点汇流累积量
         acc_data = dataset_acc.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1)
         acc_data_value = struct.unpack('f', acc_data)[0]
+        # 若汇流累积量大于阈值则记录为出入流口
         if acc_data_value >= river_th:
-            dataset_re.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", int(acc_data_value)))
+            dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", int(acc_data_value)))
             print(acc_data_value)
         else:
-            dataset_re.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_buffer_value))
-
+            dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_buffer_value))
 
 
 # 3*3网格遍历
@@ -76,7 +83,7 @@ def buffer_search(res_xoff, res_yoff, re_xoff, re_yoff):
 
 # 参数分别为： 工作空间 水体数据 流向数据 汇流累积量数据
 def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
-    global dataset_res, dataset_dir, dataset_acc, dataset_re, river_th
+    global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th
     river_th = river_threshold
 
     result_path = base_path + "/result"
@@ -110,9 +117,9 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
     fileformat = "GTiff"
     driver = gdal.GetDriverByName(fileformat)
     result_data_path = result_path + "/" + "result.tif"
-    dataset_re = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16)
-    dataset_re.SetGeoTransform(full_geotransform)
-    dataset_re.SetProjection(dataset_dir.GetProjection())
+    dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16)
+    dataset_ol.SetGeoTransform(full_geotransform)
+    dataset_ol.SetProjection(dataset_dir.GetProjection())
 
     for i in range(res_y_size):
         for j in range(res_x_size):
@@ -137,7 +144,7 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
     dataset_res = None
     dataset_dir = None
     dataset_acc = None
-    dataset_re = None
+    dataset_ol = None
 
 
 if __name__ == '__main__':
