@@ -86,30 +86,21 @@ def is_to_water(xoff, yoff):
 
 # 提取坡面：原中心点x索引 原中心点y索引 点x索引 点y索引 坡面id
 def extract_slope_surface(o_xoff, o_yoff, xoff, yoff, slope_surface_id):
-    global dataset_ol, water_value, water_buffer_value, dataset_dir
+    global dataset_ol, dataset_dir
     # 判断不在水体内则继续
     data_value = int.from_bytes(dataset_ol.GetRasterBand(1).ReadRaster(xoff, yoff, 1, 1), 'little', signed=True)
-    if data_value != water_value:
-        # 若在外边界线且未标记
-        if data_value == water_buffer_value:
-            judge_to_water = is_to_water(xoff, yoff)
-            if judge_to_water:
-                # 外边界点标记坡面id
-                dataset_ol.GetRasterBand(1).WriteRaster(xoff, yoff, 1, 1, struct.pack("i", slope_surface_id))
-                # 继续遍历相邻像元
-                slope_surface_search(xoff, yoff, slope_surface_id)
-        # 不在边界线且未标记
-        if data_value == 0:
-            # 判断是否流向原中心点
-            dir_data_value = int.from_bytes(dataset_dir.GetRasterBand(1).ReadRaster(xoff, yoff, 1, 1), 'little',
-                                            signed=True)
-            to_point = get_to_point(xoff, yoff, dir_data_value)
-            # 若流向中心点
-            if to_point[0] == o_xoff and to_point[1] == o_yoff:
-                # 标记坡面id
-                dataset_ol.GetRasterBand(1).WriteRaster(xoff, yoff, 1, 1, struct.pack("i", slope_surface_id))
-                # 继续遍历相邻像元
-                slope_surface_search(xoff, yoff, slope_surface_id)
+    # 不在边界线且未标记
+    if data_value == 0:
+        # 判断是否流向原中心点
+        dir_data_value = int.from_bytes(dataset_dir.GetRasterBand(1).ReadRaster(xoff, yoff, 1, 1), 'little',
+                                        signed=True)
+        to_point = get_to_point(xoff, yoff, dir_data_value)
+        # 若流向中心点
+        if to_point[0] == o_xoff and to_point[1] == o_yoff:
+            # 标记坡面id
+            dataset_ol.GetRasterBand(1).WriteRaster(xoff, yoff, 1, 1, struct.pack("i", slope_surface_id))
+            # 继续遍历相邻像元
+            slope_surface_search(xoff, yoff, slope_surface_id)
 
 
 # 遍历边界线构建坡面：边界点x索引 边界点y索引 坡面id
