@@ -7,18 +7,20 @@ dataset_res = None
 dataset_dir = None
 dataset_acc = None
 
-dataset_ol = one
+dataset_ol = None
 river_th = 0
 
 # 一像元宽的外包围线
 water_buffers = []
+# 水体出入流处
+water_channel = []
 
 
 water_value = -99
 water_buffer_value = -1
 
 
-# 判断是否超出数据范围
+# 判断是否超出数据范围：x索引 y索引 x最大值 y最大值
 def in_data(x, y, x_size, y_size):
     # 左侧超出
     if x < 0:
@@ -35,14 +37,72 @@ def in_data(x, y, x_size, y_size):
     return True
 
 
-# 生成水体外包围
+# 根据流向得到指向的栅格索引
+def get_to_point(x, y, dir):
+    if dir == 1:
+        return [x + 1, y]
+    elif dir == 2:
+        return [x + 1, y + 1]
+    elif dir == 4:
+        return [x, y+1]
+    elif dir == 8:
+        return [x - 1, y + 1]
+    elif dir == 16:
+        return [x - 1, y]
+    elif dir == 32:
+        return [x - 1, y - 1]
+    elif dir == 64:
+        return [x, y - 1]
+    elif dir == 128:
+        return [x + 1, y - 1]
+    else:
+        print("direction fail!")
+        return [0, 0]
+
+
+# 返回8个方向的索引
+def get_8_dir(x, y):
+    return [[x-1, y-1],
+            [x, y-1],
+            [x+1, y-1],
+            [x-1, y],
+            [x+1, y],
+            [x-1, y+1],
+            [x, y+1],
+            [x+1, y+1]]
+
+
+# 获取坡面的入口函数
+def get_slope_surface():
+    global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th, water_buffers, water_value, water_buffer_value
+    slope_surface_id = 1
+    # 遍历水体的外边线
+    for x_y_couple in water_buffers:
+        xoff = x_y_couple[0]
+        yoff = x_y_couple[1]
+        # 判断是否为边界上的非出入流处且未被标记
+        ol_data_value = int.from_bytes(dataset_ol.GetRasterBand(1).ReadRaster(xoff, yoff, 1, 1), 'little', signed = True)
+        not_is_channel = ol_data_value != water_buffer_value
+        # 若为非出入流处且未标记
+        if not_is_channel:
+            # 判断是否指向水体
+            dir_data_value = int.from_bytes(dataset_dir.GetRasterBand(1).ReadRaster(xoff, yoff, 1, 1), 'little', signed = True)
+            to_point = get_to_point(xoff, yoff, dir_data_value)
+            res_data_value = int.from_bytes(dataset_res.GetRasterBand(1).ReadRaster(to_point[0], to_point[1], 1, 1), 'little', signed=True)
+            is_to_lake = res_data_value == water_value
+            # 若流向水体
+            if is_to_lake:
+                pass
+
+
+# 生成水体外包围：水体数据的x索引 水体数据的y索引 结果数据的x索引 结果数据的y索引
 def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
-    global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th, water_buffers
+    global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th, water_buffers, water_channel
     res_x_size = dataset_res.RasterXSize
     res_y_size = dataset_res.RasterYSize
 
-    ol_data_value = int.from_bytes(dataset_ol.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1), 'little', signed = True)
     # 判断是否已经记录
+    ol_data_value = int.from_bytes(dataset_ol.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1), 'little', signed = True)
     not_recode_result = ol_data_value == 0
     # 判断是否在水体数据范围内
     in_water_data = in_data(res_xoff, res_yoff, res_x_size, res_y_size)
@@ -55,33 +115,30 @@ def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
     # 若不是水体像元且未记录则记录
     if not_recode_result and not_in_water:
         # 添加缓冲区数组记录
-        water_buffers.append((re_xoff, re_yoff))
+        water_buffers.append([re_xoff, re_yoff])
         # 获取该点汇流累积量
         acc_data = dataset_acc.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1)
         acc_data_value = struct.unpack('f', acc_data)[0]
         # 若汇流累积量大于阈值则记录为出入流口
         if acc_data_value >= river_th:
             dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", int(acc_data_value)))
-            print(acc_data_value)
+            water_channel.append([re_xoff, re_yoff])
+            # print(acc_data_value)
         else:
             dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_buffer_value))
+    # 提取坡面
+    # get_slope_surface()
 
 
-# 3*3网格遍历
+# 3*3网格遍历：水体数据的x索引 水体数据的y索引 结果数据的x索引 结果数据的y索引
 def buffer_search(res_xoff, res_yoff, re_xoff, re_yoff):
-    water_buffer(res_xoff - 1, res_yoff + 1, re_xoff - 1, re_yoff + 1)
-    water_buffer(res_xoff, res_yoff + 1, re_xoff, re_yoff + 1)
-    water_buffer(res_xoff + 1, res_yoff + 1, re_xoff + 1, re_yoff + 1)
-
-    water_buffer(res_xoff - 1, res_yoff, re_xoff - 1, re_yoff)
-    water_buffer(res_xoff + 1, res_yoff, re_xoff + 1, re_yoff)
-
-    water_buffer(res_xoff - 1, res_yoff - 1, re_xoff - 1, re_yoff - 1)
-    water_buffer(res_xoff, res_yoff - 1, re_xoff, re_yoff - 1)
-    water_buffer(res_xoff + 1, res_yoff - 1, re_xoff + 1, re_yoff - 1)
+    res_dir_array = get_8_dir(res_xoff, res_yoff)
+    re_dir_array = get_8_dir(re_xoff, re_yoff)
+    for index in range(0, 8, 1):
+        water_buffer(res_dir_array[index][0], res_dir_array[index][1], re_dir_array[index][0], re_dir_array[index][1])
 
 
-# 参数分别为： 工作空间 水体数据 流向数据 汇流累积量数据
+# 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据
 def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
     global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th
     river_th = river_threshold
