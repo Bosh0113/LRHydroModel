@@ -231,6 +231,8 @@ def get_slope_surface():
     # 合并坡面入流口相邻的坡面
     # 定义合并后的坡面分组
     slope_surface_unit = []
+    # 定义合并坡面的id集
+    slope_surface_ids = []
     # 遍历非河道出入流处
     for not_channel_point in not_channel_buffers:
         # 获取该点在结果数据的值
@@ -245,6 +247,10 @@ def get_slope_surface():
                     break
             # 若坡面入流点未参与合并
             if not_in_unit:
+                # 获取新坡面集合的id
+                slope_surface_id = data_value
+                # 记录新的坡面id
+                slope_surface_ids.append(slope_surface_id)
                 # 创建新坡面集合并添加新坡面的首个水体入流点
                 slope_surface = [not_channel_point]
                 # 获取新坡面集合的入流点集
@@ -255,14 +261,16 @@ def get_slope_surface():
     # print(slope_surface_ids)
     for index in range(0, len(slope_surface_unit), 1):
         # 获取合并后新坡面的id
-        new_slope_surface_id = index + 1
+        new_slope_surface_id = slope_surface_ids[index]
         # 获取合并后新坡面与水体的交界点
         slope_surface_inflows = slope_surface_unit[index]
         # print(slope_surface_inflows)
         for inflow_point in slope_surface_inflows:
             old_slope_surface_id = get_raster_value(dataset_ol, inflow_point[0], inflow_point[1])
-            set_raster_value(dataset_ol, inflow_point[0], inflow_point[1], new_slope_surface_id)
-            update_surface_id(inflow_point[0], inflow_point[1], old_slope_surface_id, new_slope_surface_id)
+            # 若坡面id需要更新
+            if old_slope_surface_id != new_slope_surface_id:
+                set_raster_value(dataset_ol, inflow_point[0], inflow_point[1], new_slope_surface_id)
+                update_surface_id(inflow_point[0], inflow_point[1], old_slope_surface_id, new_slope_surface_id)
 
 
 # 生成水体外包围：水体数据的x索引 水体数据的y索引 结果数据的x索引 结果数据的y索引
