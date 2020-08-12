@@ -2,7 +2,6 @@ from osgeo import gdal
 import numpy as np
 import os
 import struct
-import sys
 import time
 
 dataset_res = None
@@ -155,21 +154,21 @@ def get_new_slope_surface(xoff, yoff, not_channel_points, inflow_points):
 
 
 # 更新坡面id
-def update_surface_id(xoff, yoff, old_id, new_id):
+def get_neighbor_update_points(x, y, old_id, to_update_points):
     global dataset_ol
-    # 对相邻相同id的像元更新
-    neighbor_points = get_8_dir(xoff, yoff)
+    # 获取邻近像元
+    neighbor_points = get_8_dir(x, y)
+    # 判断各像元是否需要更新
     for point in neighbor_points:
         point_x = point[0]
         point_y = point[1]
         judge_in_data = in_data(point_x, point_y, dataset_ol.RasterXSize, dataset_ol.RasterYSize)
         if judge_in_data:
             data_value = get_raster_value(dataset_ol, point_x, point_y)
-            # 若需要更新
+            # 若需要则加入待更新数组
             if data_value == old_id:
-                set_raster_value(dataset_ol, point_x, point_y, new_id)
-                # 检查并更新相邻点
-                update_surface_id(point_x, point_y, old_id, new_id)
+                to_update_points.append(point)
+    return to_update_points
 
 
 # 获取坡面的入口函数
@@ -270,8 +269,17 @@ def get_slope_surface():
             if old_slope_surface_id != new_slope_surface_id:
                 # 更新此点的坡面id
                 set_raster_value(dataset_ol, inflow_point[0], inflow_point[1], new_slope_surface_id)
-                # 更新坡面id
-                update_surface_id(inflow_point[0], inflow_point[1], old_slope_surface_id, new_slope_surface_id)
+                # 更新坡面id，非迭代版本使用待更新数组，避免超出递归深度
+                # 获取此点周边需要更新的像元集
+                to_update_points = get_neighbor_update_points(inflow_point[0], inflow_point[1], old_slope_surface_id, [])
+                # 循环直到待更新数组为空
+                while len(to_update_points) > 0:
+                    # 取出第一个点
+                    to_update_point = to_update_points.pop()
+                    # 更新此点id
+                    set_raster_value(dataset_ol, to_update_point[0], to_update_point[1], new_slope_surface_id)
+                    # 获取此点周边需要更新的像元集
+                    to_update_points = get_neighbor_update_points(to_update_point[0], to_update_point[1], old_slope_surface_id, to_update_points)
 
 
 # 生成水体外包围：水体数据的x索引 水体数据的y索引 结果数据的x索引 结果数据的y索引
