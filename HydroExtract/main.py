@@ -68,9 +68,7 @@ def get_to_point(x, y, o_dir):
     elif dir == 128:
         return [x + 1, y - 1]
     else:
-        print("direction fail!")
-        print(dir)
-        sys.exit(0)
+        return []
 
 
 # 返回8个方向的索引
@@ -122,7 +120,8 @@ def slope_surface_search(xoff, yoff, slope_surface_id):
         judge_in_data = in_data(n_xoff, n_yoff, dataset_dir.RasterXSize, dataset_dir.RasterYSize)
         # 判断像元是否在数据集内且是否为有效流向
         dir_data_value = get_raster_value(dataset_dir, n_xoff, n_yoff)
-        if judge_in_data and dir_data_value != 0:
+        to_point = get_to_point(n_xoff, n_yoff, dir_data_value)
+        if judge_in_data and len(to_point) != 0:
             extract_slope_surface(xoff, yoff, n_xoff, n_yoff, slope_surface_id)
 
 
@@ -233,7 +232,7 @@ def get_slope_surface():
     slope_surface_unit = []
     # 定义合并坡面的id集
     slope_surface_ids = []
-    # 遍历非河道出入流处
+    # 遍历非河道出入流处对坡面与水体相交处的入流口分组
     for not_channel_point in not_channel_buffers:
         # 获取该点在结果数据的值
         data_value = get_raster_value(dataset_ol, not_channel_point[0], not_channel_point[1])
@@ -269,7 +268,9 @@ def get_slope_surface():
             old_slope_surface_id = get_raster_value(dataset_ol, inflow_point[0], inflow_point[1])
             # 若坡面id需要更新
             if old_slope_surface_id != new_slope_surface_id:
+                # 更新此点的坡面id
                 set_raster_value(dataset_ol, inflow_point[0], inflow_point[1], new_slope_surface_id)
+                # 更新坡面id
                 update_surface_id(inflow_point[0], inflow_point[1], old_slope_surface_id, new_slope_surface_id)
 
 
@@ -280,15 +281,13 @@ def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
     res_y_size = dataset_res.RasterYSize
 
     # 判断是否已经记录
-    ol_data_value = int.from_bytes(dataset_ol.GetRasterBand(1).ReadRaster(re_xoff, re_yoff, 1, 1), 'little',
-                                   signed=True)
+    ol_data_value = get_raster_value(dataset_ol, re_xoff, re_yoff)
     not_recode_result = ol_data_value == 0
     # 判断是否在水体数据范围内
     in_water_data = in_data(res_xoff, res_yoff, res_x_size, res_y_size)
     # 若在水体数据中进一步判断是否为水体内像元
     if in_water_data:
-        data_value = int.from_bytes(dataset_res.GetRasterBand(1).ReadRaster(res_xoff, res_yoff, 1, 1), 'little',
-                                    signed=True)
+        data_value = get_raster_value(dataset_res, res_xoff, res_yoff)
         not_in_water = data_value != water_value
     else:
         not_in_water = True
@@ -301,11 +300,10 @@ def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
         acc_data_value = struct.unpack('f', acc_data)[0]
         # 若汇流累积量大于阈值则记录为出入流口
         if acc_data_value >= river_th:
-            # dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", int(acc_data_value)))
             water_channel.append([re_xoff, re_yoff])
         else:
             # 标记为非出入流处的水体外边界
-            dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_buffer_value))
+            set_raster_value(dataset_ol, re_xoff, re_yoff, water_buffer_value)
 
 
 # 3*3网格遍历：水体数据的x索引 水体数据的y索引 结果数据的x索引 结果数据的y索引
@@ -340,12 +338,9 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
     res_geotransform = dataset_res.GetGeoTransform()
     dir_geotransform = dataset_dir.GetGeoTransform()
 
-    res_x_size = dataset_res.RasterXSize
-    res_y_size = dataset_res.RasterYSize
-    count = 0
-
     full_geotransform = dir_geotransform
 
+    # 结果数据左上角坐标
     full_tl_x = full_geotransform[0]
     full_tl_y = full_geotransform[3]
 
@@ -357,14 +352,13 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_dir.GetProjection())
 
-    for i in range(res_y_size):
-        for j in range(res_x_size):
-            count += 1
+    for i in range(dataset_res.RasterYSize):
+        for j in range(dataset_res.RasterXSize):
+            # 计算水体数据的x,y索引
             res_px = res_geotransform[0] + j * res_geotransform[1] + i * res_geotransform[2]
             res_py = res_geotransform[3] + j * res_geotransform[4] + i * res_geotransform[5]
-
-            scan_data = dataset_res.GetRasterBand(1).ReadRaster(j, i, 1, 1)
-            scan_value = int.from_bytes(scan_data, 'little', signed=True)
+            # 获取水体数据某点的值
+            scan_value = get_raster_value(dataset_res, j, i)
 
             # 若是水体内的像元
             if scan_value == water_value:
@@ -373,7 +367,7 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
                 re_yoff = int((res_py - full_tl_y) / full_geotransform[5] + 0.5)
 
                 # 结果数据记录水体
-                dataset_ol.GetRasterBand(1).WriteRaster(re_xoff, re_yoff, 1, 1, struct.pack("i", water_value))
+                set_raster_value(dataset_ol, re_xoff, re_yoff, water_value)
                 # 使用3*3区域生成水体外包围像元集
                 buffer_search(j, i, re_xoff, re_yoff)
 
