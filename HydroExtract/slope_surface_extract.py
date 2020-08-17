@@ -20,12 +20,12 @@ water_value = -99
 water_buffer_value = -1
 
 
-# 获取栅格数据值
+# 获取栅格数据值：数据集 x索引 y索引
 def get_raster_value(dataset, x, y):
     return int.from_bytes(dataset.GetRasterBand(1).ReadRaster(x, y, 1, 1), 'little', signed=True)
 
 
-# 写入栅格数据值
+# 写入栅格数据值：数据集 x索引 y索引 值
 def set_raster_value(dataset, x, y, value):
     dataset.GetRasterBand(1).WriteRaster(x, y, 1, 1, struct.pack("i", value))
 
@@ -50,21 +50,39 @@ def in_data(x, y, x_size, y_size):
 # 根据流向得到指向的栅格索引
 def get_to_point(x, y, o_dir):
     dir = abs(o_dir)
+    # if dir == 1:
+    #     return [x + 1, y]
+    # elif dir == 2:
+    #     return [x + 1, y + 1]
+    # elif dir == 4:
+    #     return [x, y + 1]
+    # elif dir == 8:
+    #     return [x - 1, y + 1]
+    # elif dir == 16:
+    #     return [x - 1, y]
+    # elif dir == 32:
+    #     return [x - 1, y - 1]
+    # elif dir == 64:
+    #     return [x, y - 1]
+    # elif dir == 128:
+    #     return [x + 1, y - 1]
+    # else:
+    #     return []
     if dir == 1:
         return [x + 1, y]
-    elif dir == 2:
-        return [x + 1, y + 1]
-    elif dir == 4:
-        return [x, y + 1]
     elif dir == 8:
+        return [x + 1, y + 1]
+    elif dir == 7:
+        return [x, y + 1]
+    elif dir == 6:
         return [x - 1, y + 1]
-    elif dir == 16:
+    elif dir == 5:
         return [x - 1, y]
-    elif dir == 32:
+    elif dir == 4:
         return [x - 1, y - 1]
-    elif dir == 64:
+    elif dir == 3:
         return [x, y - 1]
-    elif dir == 128:
+    elif dir == 2:
         return [x + 1, y - 1]
     else:
         return []
@@ -388,10 +406,12 @@ def hydro_extract(base_path, reservoir_tif, dir_tif, acc_tif, river_threshold):
     dataset_ol = None
 
 
+# 提取结果为坡面和湖泊/水库的tif数据
 if __name__ == '__main__':
     start = time.perf_counter()
-    hydro_extract("D:/Graduation/Program/Data/1", "tashan_99.tif", "dir.tif", "acc.tif", 300)
+    # hydro_extract("D:/Graduation/Program/Data/1", "tashan_99.tif", "dir.tif", "acc.tif", 300)
     # hydro_extract("D:/Graduation/Program/Data/2", "tashan_99.tif", "dir.tif", "acc.tif", 3000)
+    hydro_extract("D:/Graduation/Program/Test/Tree_Way_Extract/hyd_dem_taudem", "tashan_99.tif", "dir.tif", "acc.tif", 30000)
     # print(water_buffers)
     end = time.perf_counter()
     print('Run', end - start, 's')
