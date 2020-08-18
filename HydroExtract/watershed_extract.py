@@ -89,6 +89,6 @@ def get_watershed(base_path, dem_tif, river_threshold):
 # 提取子流域为tif，过程数据中包含河网的tif和shp类型数据
 if __name__ == '__main__':
     start = time.perf_counter()
-    get_watershed("D:/Graduation/Program/Data/2", "dem_fill1.tif", 300000)
+    get_watershed("D:/Graduation/Program/Data/3", "dem_fill.tif", 300000)
     end = time.perf_counter()
     print('Run', end - start, 's')

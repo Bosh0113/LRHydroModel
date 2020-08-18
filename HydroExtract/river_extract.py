@@ -25,6 +25,6 @@ def get_river(base_path, acc_tif, river_threshold):
 # 提取河网为tif
 if __name__ == '__main__':
     start = time.perf_counter()
-    get_river("D:/Graduation/Program/Data/1", "acc.tif", 300)
+    get_river("D:/Graduation/Program/Data/3", "acc.tif", 300000)
     end = time.perf_counter()
     print('Run', end - start, 's')

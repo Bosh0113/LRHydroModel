@@ -411,7 +411,7 @@ if __name__ == '__main__':
     start = time.perf_counter()
     # hydro_extract("D:/Graduation/Program/Data/1", "tashan_99.tif", "dir.tif", "acc.tif", 300)
     # hydro_extract("D:/Graduation/Program/Data/2", "tashan_99.tif", "dir.tif", "acc.tif", 3000)
-    hydro_extract("D:/Graduation/Program/Test/Tree_Way_Extract/hyd_dem_taudem", "tashan_99.tif", "dir.tif", "acc.tif", 30000)
+    hydro_extract("D:/Graduation/Program/Data/3", "tashan_99.tif", "dir.tif", "acc.tif", 300000)
     # print(water_buffers)
     end = time.perf_counter()
     print('Run', end - start, 's')
