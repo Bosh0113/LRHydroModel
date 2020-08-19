@@ -1,5 +1,6 @@
 import os
 import time
+import taudem_utils as tu
 
 
 # 根据阈值提取河道：工作空间 汇流累积量 提取阈值
@@ -13,12 +14,8 @@ def get_river(base_path, acc_tif, river_threshold):
     river_tif_path = result_path + "/river.tif"
     # 当前路径
     current_path = os.getcwd().replace("\\", "/")
-    # cmd语句调用TauDEM的Threshold程序
-    cmd = 'mpiexec -n ' + str(5) + ' ' + current_path +'/TauDEM/Threshold -ssa ' + acc_tif_path + ' -src ' + river_tif_path + ' -thresh ' + str(river_threshold)
-    print(cmd)
-    # 执行cmd
-    d = os.system(cmd)
-    print(d)
+    # 调用TauDEM的Threshold程序
+    tu.stream_definition_by_threshold(acc_tif_path, river_tif_path, str(river_threshold))
 
 
 # 此程序可用cmd调用python执行
