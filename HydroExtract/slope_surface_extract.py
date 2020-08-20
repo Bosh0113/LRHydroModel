@@ -81,8 +81,9 @@ def get_new_slope_surface(xoff, yoff, not_channel_points, inflow_points):
                     no_river = 1
                 else:
                     # 判断中间点是否为河道
-                    between_data_value = cu.get_raster_value(dataset_acc, xoff, yoff)
-                    no_river = between_data_value < river_th
+                    between_data_value1 = cu.get_raster_value(dataset_acc, xoff, points[1])
+                    between_data_value2 = cu.get_raster_value(dataset_acc, points[0], yoff)
+                    no_river = between_data_value1 < river_th and between_data_value2 < river_th
                 # 若未穿插河道
                 if no_river:
                     # 记录到当前坡面入流点集

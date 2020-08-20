@@ -62,8 +62,10 @@ if __name__ == '__main__':
     start = time.perf_counter()
     # 数据基本路径
     base_path = "D:/Graduation/Program/Data/4"
+    # base_path = "D:/Graduation/Program/Data/5"
     # 河流提取阈值
     extract_threshold = 300000
+    # extract_threshold = 30000
     # 生成示例结果
     demo1(base_path, base_path + "/dem_fill.tif", base_path + "/tashan_99.tif", extract_threshold)
     end = time.perf_counter()
