@@ -105,3 +105,22 @@ def copy_tif_data(old_path, copy_path):
     copy_ds = driver.CreateCopy(copy_path, old_ds)
     old_ds = None
     copy_ds = None
+
+
+# 重分类：原数据路径 重分类数据路径 需要更新的像元值数组(二维数组) 新像元值数组(一维数组)
+def tif_reclassify(old_tif_path, updated_tif_path, update_value_2array, new_value_array):
+    old_ds = gdal.Open(old_tif_path)
+    file_format = "GTiff"
+    driver = gdal.GetDriverByName(file_format)
+    copy_ds = driver.CreateCopy(updated_tif_path, old_ds)
+    for j in range(copy_ds.RasterYSize):
+        for i in range(copy_ds.RasterXSize):
+            data_value = get_raster_value(copy_ds, i, j)
+            for k in range(len(update_value_2array)):
+                if data_value in update_value_2array[k]:
+                    index = update_value_2array[k].index(data_value)
+                    new_value = new_value_array[index]
+                    set_raster_value(copy_ds, i, j, new_value)
+                    break
+    old_ds = None
+    copy_ds = None

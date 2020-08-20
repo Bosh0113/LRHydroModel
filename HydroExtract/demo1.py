@@ -4,6 +4,8 @@ import slope_surface_extract as sse
 import common_utils as cu
 import os
 import time
+import shutil
+import gdal
 
 
 # 示例
@@ -28,15 +30,30 @@ def demo1():
                           workspace_path + "/acc.tif", river_threshold)
 
     # 结果文件夹
+    print("----------------------------------Copy Result Data----------------------------------")
     result_path = base_path + "/result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)
-    # 河网数据结果
-    cu.copy_tif_data(workspace_path + "/stream.tif", result_path + "/stream.tif")
-    # 子流域数据结果
-    cu.copy_tif_data(workspace_path + "/watershed.tif", result_path + "/watershed.tif")
-    # 湖泊/水库和坡面结果
-    cu.copy_tif_data(workspace_path + "/water_slope_surface.tif", result_path + "/water_slope_surface.tif")
+    # 复制子流域结果数据、修正后的湖泊/水库以及河网矢量结果数据到文件夹
+    file_list = os.listdir(workspace_path)
+    result_files = ["watershed", "water_revised", "stream_shp"]
+    for file in file_list:
+        file_info = file.split(".")
+        if file_info[0] in result_files:
+            shutil.copy(workspace_path + "/" + file, result_path + "/" + file)
+
+    # 复制河网栅格结果数据和重分类
+    river_ds = gdal.Open(workspace_path + "/stream.tif")
+    no_data_value = river_ds.GetRasterBand(1).GetNoDataValue()
+    cu.tif_reclassify(workspace_path + "/stream.tif", result_path + "/stream.tif", [[0]], [int(no_data_value)])
+    river_ds = None
+
+    # 复制坡面结果数据和重分类
+    w_w_surface_ds = gdal.Open(workspace_path + "/water_slope_surface.tif")
+    no_data_value = w_w_surface_ds.GetRasterBand(1).GetNoDataValue()
+    cu.tif_reclassify(workspace_path + "/water_slope_surface.tif", result_path + "/slope_surface.tif",
+                      [[-99]], [int(no_data_value)])
+    w_w_surface_ds = None
 
 
 if __name__ == '__main__':

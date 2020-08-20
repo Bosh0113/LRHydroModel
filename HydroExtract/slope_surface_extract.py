@@ -1,5 +1,4 @@
 import gdal
-import numpy as np
 import os
 import time
 import struct
@@ -17,6 +16,7 @@ water_buffers = []
 # 水体河道出入流处
 water_channel = []
 
+no_data_value = -9999
 water_value = -99
 water_buffer_value = -1
 
@@ -32,11 +32,11 @@ def get_to_point_data(xoff, yoff):
 
 # 提取坡面：原中心点x索引 原中心点y索引 点x索引 点y索引 坡面id
 def extract_slope_surface(o_xoff, o_yoff, xoff, yoff, slope_surface_id):
-    global dataset_ol, dataset_dir
+    global dataset_ol, dataset_dir, no_data_value
     # 判断不在水体内则继续
     data_value = cu.get_raster_value(dataset_ol, xoff, yoff)
     # 不在边界线且未标记
-    if data_value == 0:
+    if data_value == no_data_value:
         # 判断是否流向原中心点
         dir_data_value = cu.get_raster_value(dataset_dir, xoff, yoff)
         to_point = cu.get_to_point(xoff, yoff, dir_data_value)
@@ -223,13 +223,13 @@ def slope_surface_extract():
 
 # 生成水体外包围：水体数据的x索引 水体数据的y索引 结果数据的x索引 结果数据的y索引
 def water_buffer(res_xoff, res_yoff, re_xoff, re_yoff):
-    global dataset_res, dataset_acc, dataset_ol, river_th, water_buffers, water_channel
+    global dataset_res, dataset_acc, dataset_ol, river_th, water_buffers, water_channel, no_data_value
     res_x_size = dataset_res.RasterXSize
     res_y_size = dataset_res.RasterYSize
 
     # 判断是否已经记录
     ol_data_value = cu.get_raster_value(dataset_ol, re_xoff, re_yoff)
-    not_recode_result = ol_data_value == 0
+    not_recode_result = ol_data_value == no_data_value
     # 判断是否在水体数据范围内
     in_water_data = cu.in_data(res_xoff, res_yoff, res_x_size, res_y_size)
     # 若在水体数据中进一步判断是否为水体内像元
@@ -261,6 +261,15 @@ def buffer_search(res_xoff, res_yoff, re_xoff, re_yoff):
         water_buffer(res_dir_array[index][0], res_dir_array[index][1], re_dir_array[index][0], re_dir_array[index][1])
 
 
+# 清除边界线标记
+def clear_buffer():
+    global water_buffers, water_buffer_value, no_data_value, dataset_ol
+    for cell in water_buffers:
+        data_value = cu.get_raster_value(dataset_ol, cell[0], cell[1])
+        if data_value == water_buffer_value:
+            cu.set_raster_value(dataset_ol, cell[0], cell[1], no_data_value)
+
+
 # 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据
 def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_threshold):
     print("Extract Start")
@@ -270,7 +279,6 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     if not os.path.exists(work_path):
         os.makedirs(work_path)
 
-    np.set_printoptions(threshold=np.inf)
     dataset_res = gdal.Open(res_data_path)
     dataset_dir = gdal.Open(dir_data_path)
     dataset_acc = gdal.Open(acc_data_path)
@@ -286,6 +294,7 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16)
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_dir.GetProjection())
+    dataset_ol.GetRasterBand(1).SetNoDataValue(no_data_value)
 
     for i in range(dataset_res.RasterYSize):
         for j in range(dataset_res.RasterXSize):
@@ -306,6 +315,8 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
 
     # 提取坡面
     slope_surface_extract()
+    # 清除边界线标记
+    clear_buffer()
 
     dataset_res = None
     dataset_dir = None
