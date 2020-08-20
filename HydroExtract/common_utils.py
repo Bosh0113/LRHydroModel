@@ -124,3 +124,26 @@ def tif_reclassify(old_tif_path, updated_tif_path, update_value_2array, new_valu
                     break
     old_ds = None
     copy_ds = None
+
+
+# 栅格数据掩膜处理：原始数据 掩膜数据 结果数据
+def raster_mask(raster_path, mask_path, result_path):
+    # 获取数据集
+    old_ds = gdal.Open(raster_path)
+    mask_ds = gdal.Open(mask_path)
+    # 获取无数据标识
+    old_no_data = old_ds.GetRasterBand(1).GetNoDataValue()
+    mask_no_data = mask_ds.GetRasterBand(1).GetNoDataValue()
+    # 创建结果数据
+    file_format = "GTiff"
+    driver = gdal.GetDriverByName(file_format)
+    result_ds = driver.CreateCopy(result_path, old_ds)
+    # 掩膜处理
+    for j in range(mask_ds.RasterYSize):
+        for i in range(mask_ds.RasterXSize):
+            mask_data = get_raster_value(mask_ds, i, j)
+            if mask_data != mask_no_data:
+                result_point = off_transform(i, j, mask_ds, result_ds)
+                set_raster_value(result_ds, result_point[0], result_point[1], int(old_no_data))
+    old_ds = None
+    result_ds = None

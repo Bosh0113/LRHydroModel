@@ -34,13 +34,17 @@ def demo1():
     result_path = base_path + "/result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)
-    # 复制子流域结果数据、修正后的湖泊/水库以及河网矢量结果数据到文件夹
+    # 复制修正后的湖泊/水库以及河网矢量结果数据到文件夹
     file_list = os.listdir(workspace_path)
-    result_files = ["watershed", "water_revised", "stream_shp"]
+    result_files = ["water_revised", "stream_shp"]
     for file in file_list:
         file_info = file.split(".")
         if file_info[0] in result_files:
             shutil.copy(workspace_path + "/" + file, result_path + "/" + file)
+
+    # 对子流域结果掩膜输出至结果文件夹
+    cu.raster_mask(workspace_path + "/watershed.tif", workspace_path + "/water_slope_surface.tif",
+                   result_path + "/watershed.tif")
 
     # 复制河网栅格结果数据和重分类
     river_ds = gdal.Open(workspace_path + "/stream.tif")
