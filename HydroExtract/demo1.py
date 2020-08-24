@@ -61,12 +61,18 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
 if __name__ == '__main__':
     start = time.perf_counter()
     # 数据基本路径
-    base_path = "D:/Graduation/Program/Data/4"
+    # base_path = "D:/Graduation/Program/Data/4"
     # base_path = "D:/Graduation/Program/Data/5"
+    base_path = "D:/Graduation/Program/Data/6"
+    # DEM数据路径
+    dem_data_path = base_path + "/dem_fill.tif"
+    # 湖泊/水库数据路径
+    # lake_data_path = base_path + "/tashan_99.tif"
+    lake_data_path = base_path + "/lake_99.tif"
     # 河流提取阈值
     extract_threshold = 300000
     # extract_threshold = 30000
     # 生成示例结果
-    demo1(base_path, base_path + "/dem_fill.tif", base_path + "/tashan_99.tif", extract_threshold)
+    demo1(base_path, dem_data_path, lake_data_path, extract_threshold)
     end = time.perf_counter()
     print('Run', end - start, 's')
