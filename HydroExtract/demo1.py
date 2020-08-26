@@ -63,7 +63,7 @@ if __name__ == '__main__':
     # 数据基本路径
     # base_path = "D:/Graduation/Program/Data/4"
     # base_path = "D:/Graduation/Program/Data/5"
-    base_path = "D:/Graduation/Program/Data/6"
+    base_path = "D:/Graduation/Program/Data/8"
     # DEM数据路径
     dem_data_path = base_path + "/dem_fill.tif"
     # 湖泊/水库数据路径
