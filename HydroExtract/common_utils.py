@@ -3,12 +3,17 @@ import gdal
 
 
 # 获取栅格数据值：数据集 x索引 y索引
-def get_raster_value(dataset, x, y):
+def get_raster_int_value(dataset, x, y):
     return int.from_bytes(dataset.GetRasterBand(1).ReadRaster(x, y, 1, 1), 'little', signed=True)
 
 
+# 获取栅格数据值(float)： 数据集 x索引 y索引
+def get_raster_float_value(dataset, x, y):
+    return struct.unpack('f', dataset.GetRasterBand(1).ReadRaster(x, y, 1, 1))[0]
+
+
 # 写入栅格数据值：数据集 x索引 y索引 值
-def set_raster_value(dataset, x, y, value):
+def set_raster_int_value(dataset, x, y, value):
     dataset.GetRasterBand(1).WriteRaster(x, y, 1, 1, struct.pack("i", value))
 
 
@@ -115,12 +120,12 @@ def tif_reclassify(old_tif_path, updated_tif_path, update_value_2array, new_valu
     copy_ds = driver.CreateCopy(updated_tif_path, old_ds)
     for j in range(copy_ds.RasterYSize):
         for i in range(copy_ds.RasterXSize):
-            data_value = get_raster_value(copy_ds, i, j)
+            data_value = get_raster_int_value(copy_ds, i, j)
             for k in range(len(update_value_2array)):
                 if data_value in update_value_2array[k]:
                     index = update_value_2array[k].index(data_value)
                     new_value = new_value_array[index]
-                    set_raster_value(copy_ds, i, j, new_value)
+                    set_raster_int_value(copy_ds, i, j, new_value)
                     break
     old_ds = None
     copy_ds = None
@@ -141,9 +146,9 @@ def raster_mask(raster_path, mask_path, result_path):
     # 掩膜处理
     for j in range(mask_ds.RasterYSize):
         for i in range(mask_ds.RasterXSize):
-            mask_data = get_raster_value(mask_ds, i, j)
+            mask_data = get_raster_int_value(mask_ds, i, j)
             if mask_data != mask_no_data:
                 result_point = off_transform(i, j, mask_ds, result_ds)
-                set_raster_value(result_ds, result_point[0], result_point[1], int(old_no_data))
+                set_raster_int_value(result_ds, result_point[0], result_point[1], int(old_no_data))
     old_ds = None
     result_ds = None

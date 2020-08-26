@@ -24,7 +24,7 @@ def water_revise(water_tif_path, river_tif_path, dir_tif_path):
             # 获取该点x,y在river中的索引
             river_off = cu.off_transform(j, i, water_ds, river_ds)
             # 获取river中该点的值
-            river_value = cu.get_raster_value(river_ds, river_off[0], river_off[1])
+            river_value = cu.get_raster_int_value(river_ds, river_off[0], river_off[1])
             # 判断是否为河流
             if river_value == 1:
                 # 记录河流在water中的索引
@@ -41,14 +41,14 @@ def water_revise(water_tif_path, river_tif_path, dir_tif_path):
             river_in_water_x = river_in_water_data[index][0]
             river_in_water_y = river_in_water_data[index][1]
             # 获取该点在water中的值
-            water_data_value = cu.get_raster_value(water_ds, river_in_water_x, river_in_water_y)
+            water_data_value = cu.get_raster_int_value(water_ds, river_in_water_x, river_in_water_y)
             # 判断若不在水体内
             if water_data_value != water_value:
                 # 获取该点x,y在river中的索引
                 river_off = cu.off_transform(river_in_water_x, river_in_water_y, water_ds, river_ds)
                 # 获取该处流向
                 dir_off = cu.off_transform(river_in_water_x, river_in_water_y, water_ds, dir_ds)
-                dir_value = cu.get_raster_value(dir_ds, dir_off[0], dir_off[1])
+                dir_value = cu.get_raster_int_value(dir_ds, dir_off[0], dir_off[1])
                 # 获取该处在river的下一个像元索引
                 to_river_point = cu.get_to_point(river_off[0], river_off[1], dir_value)
                 # 获取3*3相邻的像元索引
@@ -62,14 +62,14 @@ def water_revise(water_tif_path, river_tif_path, dir_tif_path):
                     # 如果在water数据内
                     if judge_in_data:
                         # 获取water内像元值
-                        water_data_value = cu.get_raster_value(water_ds, w_n_off[0], w_n_off[1])
+                        water_data_value = cu.get_raster_int_value(water_ds, w_n_off[0], w_n_off[1])
                         # 判断是否为湖泊/水库
                         if water_data_value == water_value:
                             # 判断河流是否与其邻接而不是流入
                             if river_neighbor[n_index][0] != to_river_point[0] or \
                                     river_neighbor[n_index][1] != to_river_point[1]:
                                 # 更新water此处为湖泊/水库
-                                cu.set_raster_value(water_ds, river_in_water_x, river_in_water_y, water_value)
+                                cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
                                 update_flag = 1
                                 break
 
