@@ -32,9 +32,9 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     result_path = workspace_path + "/result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)
-    # 复制修正后的湖泊/水库以及河网矢量结果数据到文件夹
+    # 复制修正后的湖泊/水库，坡面流路以及河网矢量结果数据到文件夹
     file_list = os.listdir(process_path)
-    result_files = ["water_revised", "stream_shp"]
+    result_files = ["water_revised", "slope_surface_route", "stream_shp"]
     for file in file_list:
         file_info = file.split(".")
         if file_info[0] in result_files:

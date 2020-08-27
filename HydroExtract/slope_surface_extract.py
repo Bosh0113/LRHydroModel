@@ -8,6 +8,7 @@ dataset_dir = None
 dataset_acc = None
 
 dataset_ol = None
+dataset_ro = None
 river_th = 0
 
 # 水体河道出入流处
@@ -18,10 +19,11 @@ water_ol_bufs = []
 no_data_value = -9999
 water_value = -99
 water_buffer_value = -1
+surface_route_value = 1
 
 
-# 获取某点流向指向的点其在结果数据的值
-def get_to_point_data(xoff, yoff):
+# 获取某点流向指向的点其在结果数据的值：x索引 y索引 某点流向指向的点其在结果数据的值(返回值)
+def get_to_point_ol_data(xoff, yoff):
     global dataset_dir, dataset_ol
     dir_data_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
     to_point = cu.get_to_point(xoff, yoff, dir_data_value)
@@ -29,35 +31,43 @@ def get_to_point_data(xoff, yoff):
     return re_data_value
 
 
-# 对水体的坡面提取排序
-def water_order(old_water_bufs):
+# 对水体的坡面提取排序：原水体外边界集合 排序后的水体外边界集合 各水体外边界最大汇流累积点位置集合(返回值)
+def water_order(old_water_bufs, new_water_bufs):
     global dataset_acc
-    new_water_bufs = []
     recode_acc = []
+    new_water_bufs.clear()
+    # 各水体外边界上最大汇流累积量位置的集合
+    surface_route_start = []
     for water_buf in old_water_bufs:
         # 获取此水体外边界最大汇流累积量
         max_acc = 0.0
+        # 记录最大汇流累积量位置索引
+        max_acc_point = water_buf[0]
         for point in water_buf:
             # 获得汇流累积量
             acc_value = cu.get_raster_float_value(dataset_acc, point[0], point[1])
             # 更新最大值记录
             if acc_value > max_acc:
                 max_acc = acc_value
+                max_acc_point = point
         # 插入排序
         if len(recode_acc) == 0:
             recode_acc.append(max_acc)
             new_water_bufs.append(water_buf)
+            surface_route_start.append(max_acc_point)
         else:
             for index in range(len(recode_acc)):
                 if recode_acc[index] > max_acc:
                     recode_acc.insert(index, max_acc)
                     new_water_bufs.insert(index, water_buf)
+                    surface_route_start.insert(index, max_acc_point)
                     break
                 if index == len(recode_acc) - 1 and recode_acc[index] < max_acc:
                     recode_acc.append(max_acc)
                     new_water_bufs.append(water_buf)
+                    surface_route_start.append(max_acc_point)
 
-    return new_water_bufs
+    return surface_route_start
 
 
 # 提取坡面：原中心点x索引 原中心点y索引 点x索引 点y索引 坡面id
@@ -95,7 +105,7 @@ def slope_surface_search(xoff, yoff, slope_surface_id, water_buf, upstream_inflo
             extract_slope_surface(xoff, yoff, n_xoff, n_yoff, slope_surface_id, water_buf, upstream_inflow)
 
 
-# 获取与某入流点相邻的入流点集
+# 获取与某入流点相邻的水体外边界上游的未被记录坡面合并的入流点集：x索引 y索引 某水外边界上游入流点的集合 如函数描述(返回值)
 def get_new_slope_surface(xoff, yoff, upstream_inflow, inflow_points):
     global dataset_acc, river_th, dataset_ol
     neighbor_points = cu.get_8_dir(xoff, yoff)
@@ -141,7 +151,7 @@ def get_neighbor_update_points(x, y, old_id, to_update_points):
     return to_update_points
 
 
-# 判断是否为水体流出点：x索引 y索引
+# 判断是否为水体流出点：x索引 y索引 判断结果(返回值)
 def judge_from_water(xoff, yoff):
     global dataset_dir, dataset_ol, water_value
     neighbor_points = cu.get_8_dir(xoff, yoff)
@@ -209,7 +219,7 @@ def surface_merge(upstream_inflow):
                     to_update_points = get_neighbor_update_points(to_update_point[0], to_update_point[1], old_slope_surface_id, to_update_points)
 
 
-# 获取坡面的入口函数：某水体外边界像元集 起始坡面id
+# 获取坡面的入口函数：某水体外边界像元集 起始坡面id 某水体外边界上游入流像元集 使用的id最大值(返回值)
 def slope_surface_extract(water_buf, current_id, upstream_inflows):
     global dataset_ol, dataset_dir, dataset_acc, water_buffer_value, river_th
     # 定义非河道出入流处的外边界点集
@@ -226,7 +236,7 @@ def slope_surface_extract(water_buf, current_id, upstream_inflows):
         # 若为非河道出入流处
         if not_is_channel:
             # 判断是否指向水体
-            to_point_data = get_to_point_data(xoff, yoff)
+            to_point_data = get_to_point_ol_data(xoff, yoff)
             judge_to_water = to_point_data == water_value
             # 若流向水体
             if judge_to_water:
@@ -284,7 +294,35 @@ def buffer_search(o_res_xoff, o_res_yoff, water_ol_buf):
                 water_points.append([res_xoff, res_yoff])
 
 
-# 清除边界线标记
+# 提取坡面流路
+def get_surface_route(surface_route_start):
+    global dataset_acc, dataset_dir, dataset_ro, dataset_ol, water_value, river_th, surface_route_value
+    # 提取各水体的坡面流路
+    for route_start_point in surface_route_start:
+        # 判断是否为流路的点集
+        judge_route = [route_start_point]
+        while len(judge_route) > 0:
+            current_point = judge_route.pop()
+            xoff = current_point[0]
+            yoff = current_point[1]
+            # 获取此点其汇流累积量
+            acc_value = cu.get_raster_float_value(dataset_acc, xoff, yoff)
+            # 获取此点在结果数据的值
+            ol_value = cu.get_raster_int_value(dataset_ol, xoff, yoff)
+            # 若流向的点不为水体且不为河道则继续
+            if ol_value != water_value and acc_value < river_th:
+                # 记录此点为坡面流路
+                cu.set_raster_int_value(dataset_ro, xoff, yoff, surface_route_value)
+            # 获取此点流向
+            dir_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
+            # 获取其流向的点
+            to_point = cu.get_to_point(xoff, yoff, dir_value)
+            if len(to_point) > 0:
+                # 加入判断数组
+                judge_route.append(to_point)
+
+
+# 清除边界线标记：某水体的外边界
 def clear_buffer(water_buf):
     global water_buffer_value, no_data_value, dataset_ol
     for cell in water_buf:
@@ -296,7 +334,7 @@ def clear_buffer(water_buf):
 # 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据
 def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_threshold):
     print("Extract Start")
-    global dataset_res, dataset_dir, dataset_acc, dataset_ol, river_th, water_ol_bufs
+    global dataset_res, dataset_dir, dataset_acc, dataset_ol, dataset_ro, river_th, water_ol_bufs
     river_th = river_threshold
 
     if not os.path.exists(work_path):
@@ -310,7 +348,7 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
 
     full_geotransform = dir_geotransform
 
-    # 创建结果数据
+    # 创建坡面提取结果数据
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
     result_data_path = work_path + "/water_slope_surface.tif"
@@ -318,6 +356,13 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_dir.GetProjection())
     dataset_ol.GetRasterBand(1).SetNoDataValue(no_data_value)
+
+    # 创建坡面流路结果数据
+    route_data_path = work_path + "/slope_surface_route.tif"
+    dataset_ro = driver.Create(route_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16)
+    dataset_ro.SetGeoTransform(full_geotransform)
+    dataset_ro.SetProjection(dataset_dir.GetProjection())
+    dataset_ro.GetRasterBand(1).SetNoDataValue(no_data_value)
 
     for i in range(dataset_res.RasterYSize):
         for j in range(dataset_res.RasterXSize):
@@ -348,32 +393,37 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
                         water_ol_bufs.append(water_ol_buf)
 
     # 对水体的坡面提取排序
-    water_ol_bufs = water_order(water_ol_bufs)
+    water_ol_bufs_ordered = []
+    surface_route_start = water_order(water_ol_bufs, water_ol_bufs_ordered)
 
-    # 提取坡面
+    # 沿水体外边界直接非河道入流点提取坡面
     # 坡面id初始化
     start_id = 0
     # 上游流入点的集合
     upstream_inflows = []
-    for water_ol_buf in water_ol_bufs:
+    for water_ol_buf in water_ol_bufs_ordered:
         start_id = slope_surface_extract(water_ol_buf, start_id, upstream_inflows)
 
-    # # 合并坡面入流口相邻的坡面
+    # 合并坡面入流口相邻的坡面
     for upstream_inflow in upstream_inflows:
         surface_merge(upstream_inflow)
 
+    # 提取坡面流路
+    get_surface_route(surface_route_start)
+
     # 清除边界线标记
-    for water_ol_buf in water_ol_bufs:
+    for water_ol_buf in water_ol_bufs_ordered:
         clear_buffer(water_ol_buf)
 
     dataset_res = None
     dataset_dir = None
     dataset_acc = None
     dataset_ol = None
+    dataset_ro = None
     print("Extract End")
 
 
-# 提取结果为坡面和湖泊/水库的tif数据
+# 提取结果为坡面和湖泊/水库的tif数据以及坡面流路的tif数据
 if __name__ == '__main__':
     start = time.perf_counter()
     # base_path = "D:/Graduation/Program/Data/3"
