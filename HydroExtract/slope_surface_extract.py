@@ -204,11 +204,8 @@ def surface_merge(upstream_inflow):
             old_slope_surface_id = cu.get_raster_int_value(dataset_ol, inflow_point[0], inflow_point[1])
             # 若坡面id需要更新
             if old_slope_surface_id != new_slope_surface_id:
-                # 更新此点的坡面id
-                cu.set_raster_int_value(dataset_ol, inflow_point[0], inflow_point[1], new_slope_surface_id)
-                # 更新坡面id，非迭代版本使用待更新数组，避免超出递归深度
-                # 获取此点周边需要更新的像元集
-                to_update_points = get_neighbor_update_points(inflow_point[0], inflow_point[1], old_slope_surface_id, [])
+                # 获取需要更新的像元集
+                to_update_points = [inflow_point]
                 # 循环直到待更新数组为空
                 while len(to_update_points) > 0:
                     # 取出第一个点
