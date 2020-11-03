@@ -8,27 +8,43 @@ water_value = -99
 
 
 # 结合河流修正湖泊/水库边界：湖泊/水库数据路径 河网数据路径 流向数据路径
-def water_revise(water_tif_path, river_tif_path, dir_tif_path):
+def water_revise(work_path, water_tif_path, river_tif_path, dir_tif_path, acc_tif_path):
     global water_value
 
     # 创建数据集
     water_ds = gdal.OpenEx(water_tif_path, 1)
     river_ds = gdal.Open(river_tif_path)
     dir_ds = gdal.Open(dir_tif_path)
+    acc_ds = gdal.Open(acc_tif_path)
 
-    # 河流在water中的索引数组
-    river_in_water_data = []
-    # 遍历水体数据搜索范围内河流
-    for i in range(water_ds.RasterYSize):
-        for j in range(water_ds.RasterXSize):
-            # 获取该点x,y在river中的索引
-            river_off = cu.off_transform(j, i, water_ds, river_ds)
-            # 获取river中该点的值
-            river_value = cu.get_raster_int_value(river_ds, river_off[0], river_off[1])
-            # 判断是否为河流
-            if river_value == 1:
-                # 记录河流在water中的索引
-                river_in_water_data.append([j, i])
+    # 创建河流记录文件
+    river_record_txt = work_path + "/river_record.txt"
+    if os.path.exists(river_record_txt):
+        os.remove(river_record_txt)
+    with open(river_record_txt, 'a') as river_f:
+
+        # 河流在water中的索引数组
+        river_in_water_data = []
+        # 遍历水体数据搜索范围内河流
+        for i in range(water_ds.RasterYSize):
+            for j in range(water_ds.RasterXSize):
+                # 获取该点x,y在river中的索引
+                river_off = cu.off_transform(j, i, water_ds, river_ds)
+                # 获取river中该点的值
+                river_value = cu.get_raster_int_value(river_ds, river_off[0], river_off[1])
+                # 判断是否为河流
+                if river_value == 1:
+                    # 记录河流在water中的索引
+                    river_in_water_data.append([j, i])
+                    # 需要记录的河系信息：x索引，y索引，流向，汇流累积量
+                    river_cell_dir = cu.get_raster_int_value(dir_ds, j, i)
+                    river_cell_acc = cu.get_raster_float_value(acc_ds, j, i)
+                    river_record_item = [j, i, river_cell_dir, river_cell_acc]
+                    # 如果是有效河流
+                    if river_cell_dir >= 0 and river_cell_acc >= 0:
+                        # 记录到文件中
+                        river_record_str = ','.join(str(k) for k in river_record_item)
+                        river_f.write(river_record_str + '\n')
 
     # 根据与河流的邻近关系更新水体边界
     update_flag = 1
@@ -119,7 +135,7 @@ def water_revise_prepare(work_path, dem_tif_path, water_tif_path, extract_thresh
     cu.copy_tif_data(water_tif_path, water_copy_path)
 
     # 修正水体
-    water_revise(water_copy_path, str_tif_path, dir_tif_path)
+    water_revise(work_path, water_copy_path, str_tif_path, dir_tif_path, total_upstream_path)
 
 
 if __name__ == '__main__':
