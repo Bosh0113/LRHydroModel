@@ -21,7 +21,7 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     print("----------------------------------Get Revised Water----------------------------------")
     water_revised_path = process_path + "/water_revised.tif"
     cu.copy_tif_data(water_tif_path, water_revised_path)
-    wr.water_revise(process_path, water_revised_path, process_path + "/stream.tif", process_path + "/dir.tif", process_path + "/acc.tif")
+    wr.water_revise(water_revised_path, process_path + "/stream.tif", process_path + "/dir.tif")
     # 提取坡面和湖泊/水库
     print("----------------------------------Get Slope Surface----------------------------------")
     sse.get_slope_surface(process_path, process_path + "/water_revised.tif", process_path + "/dir.tif",
