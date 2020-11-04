@@ -39,10 +39,7 @@ def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_ti
     dir_ds = None
 
 
-def watershed_recode(work_path, river_record_path, watershed_tif_path, dir_tif_path):
-    # 创建结果数据文件夹
-    if not os.path.exists(work_path):
-        os.makedirs(work_path)
+def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path):
 
     # 创建数据集
     watershed_ds = gdal.Open(watershed_tif_path)
@@ -202,8 +199,6 @@ def watershed_recode(work_path, river_record_path, watershed_tif_path, dir_tif_p
 if __name__ == '__main__':
     start = time.perf_counter()
     base_path = "D:/Graduation/Program/Data/10"
-    workspace_path = base_path + "/result"
-    watershed_recode(workspace_path, base_path + "/river_record.txt", base_path + "/watershed.tif",
-                     base_path + "/dir.tif")
+    watershed_recode(base_path + "/river_record.txt", base_path + "/watershed.tif", base_path + "/dir.tif")
     end = time.perf_counter()
     print('Run', end - start, 's')

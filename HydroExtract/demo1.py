@@ -2,6 +2,8 @@ import watershed_extract as we
 import water_revise as wr
 import slope_surface_extract as sse
 import common_utils as cu
+import record_rivers as rr
+import watershed_recode as wre
 import os
 import time
 import shutil
@@ -43,6 +45,10 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     # 对子流域结果掩膜输出至结果文件夹
     cu.raster_mask(process_path + "/watershed.tif", process_path + "/water_slope_surface.tif",
                    result_path + "/watershed.tif")
+    # 记录河系信息
+    rr.record_rivers(process_path, process_path + "/stream.tif", process_path + "/acc.tif")
+    # 对子流域编码更新
+    wre.watershed_recode(process_path + "/river_record.txt", result_path + "/watershed.tif", process_path + "/dir.tif")
 
     # 复制河网栅格结果数据和重分类
     river_ds = gdal.Open(process_path + "/stream.tif")
@@ -63,7 +69,7 @@ if __name__ == '__main__':
     # 数据基本路径
     # base_path = "D:/Graduation/Program/Data/4"
     # base_path = "D:/Graduation/Program/Data/5"
-    base_path = "D:/Graduation/Program/Data/9"
+    base_path = "D:/Graduation/Program/Data/11"
     # DEM数据路径
     dem_data_path = base_path + "/dem_fill.tif"
     # 湖泊/水库数据路径
