@@ -41,4 +41,3 @@ if __name__ == '__main__':
     record_rivers(workspace_path, base_path + "/stream.tif", base_path + "/acc.tif")
     end = time.perf_counter()
     print('Run', end - start, 's')
-

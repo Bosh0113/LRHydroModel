@@ -1,4 +1,3 @@
-import os
 import time
 import gdal
 import common_utils as cu
