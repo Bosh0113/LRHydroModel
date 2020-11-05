@@ -2,12 +2,16 @@ import time
 import gdal
 import common_utils as cu
 
+water_value = -99
 
-# 由河系元素开始追踪重编码上游子流域区域：新区域标识 河系像元x索引 河系像元y索引 子流域数据路径 流向数据路径 河系xy索引集合
-def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_tif_path, rivers_index):
+
+# 由河系元素开始追踪重编码上游子流域区域：新区域标识 河系像元x索引 河系像元y索引 子流域数据路径 流向数据路径 湖泊/水库数据路径 河系xy索引集合
+def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_tif_path, water_tif_path, rivers_index):
+    global water_value
     # 创建数据集
     watershed_ds = gdal.OpenEx(watershed_tif_path, 1)
     dir_ds = gdal.Open(dir_tif_path)
+    water_ds = gdal.Open(water_tif_path)
     # 初始化需要赋值的像元集合
     update_cells = [[river_x, river_y]]
     # 更新区域内像元值
@@ -25,8 +29,10 @@ def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_ti
             n_y = neighbor_cell[1]
             # 判断邻近点是否在数据内
             if cu.in_data(n_x, n_y, watershed_ds.RasterXSize, watershed_ds.RasterYSize):
-                # 若不为河段
-                if neighbor_cell not in rivers_index:
+                # 若不为河段并不为湖泊/水库（即若为子流域）
+                water_off = cu.off_transform(n_x, n_y, watershed_ds, water_ds)
+                in_water = cu.is_water_cell(water_ds, water_off[0], water_off[1], water_value)
+                if neighbor_cell not in rivers_index and not in_water:
                     dir_value = cu.get_raster_int_value(dir_ds, n_x, n_y)
                     to_point = cu.get_to_point(n_x, n_y, dir_value)
                     # 若为上游点
@@ -38,7 +44,7 @@ def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_ti
     dir_ds = None
 
 
-def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path):
+def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_tif_path):
 
     # 创建数据集
     watershed_ds = gdal.Open(watershed_tif_path)
@@ -189,7 +195,7 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path):
         # print(river)
         for river_cell in river:
             cell_xy = river_cell.split(',')
-            recode_from_river(max_ws_id, int(cell_xy[0]), int(cell_xy[1]), watershed_tif_path, dir_tif_path, rivers_index)
+            recode_from_river(max_ws_id, int(cell_xy[0]), int(cell_xy[1]), watershed_tif_path, dir_tif_path, water_tif_path, rivers_index)
 
     watershed_ds = None
     dir_ds = None
@@ -198,6 +204,6 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path):
 if __name__ == '__main__':
     start = time.perf_counter()
     base_path = "D:/Graduation/Program/Data/10"
-    watershed_recode(base_path + "/river_record.txt", base_path + "/watershed.tif", base_path + "/dir.tif")
+    watershed_recode(base_path + "/river_record.txt", base_path + "/watershed.tif", base_path + "/dir.tif", base_path + "/water_revised.tif")
     end = time.perf_counter()
     print('Run', end - start, 's')

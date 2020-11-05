@@ -48,7 +48,7 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     # 记录河系信息
     rr.record_rivers(process_path, process_path + "/stream.tif", process_path + "/acc.tif")
     # 对子流域编码更新
-    wre.watershed_recode(process_path + "/river_record.txt", result_path + "/watershed.tif", process_path + "/dir.tif")
+    wre.watershed_recode(process_path + "/river_record.txt", result_path + "/watershed.tif", process_path + "/dir.tif", process_path + "/water_revised.tif")
 
     # 复制河网栅格结果数据和重分类
     river_ds = gdal.Open(process_path + "/stream.tif")
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # 数据基本路径
     # base_path = "D:/Graduation/Program/Data/4"
     # base_path = "D:/Graduation/Program/Data/5"
-    base_path = "D:/Graduation/Program/Data/12"
+    base_path = "D:/Graduation/Program/Data/13"
     # DEM数据路径
     dem_data_path = base_path + "/dem_fill.tif"
     # 湖泊/水库数据路径

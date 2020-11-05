@@ -296,7 +296,7 @@ def get_surface_route(surface_route_start):
     global dataset_acc, dataset_dir, dataset_ro, dataset_ol, water_value, river_th, surface_route_value
     # 提取各水体的坡面流路
     for route_start_point in surface_route_start:
-        # 判断是否为流路的点集
+        # 初始化流路追踪数组
         judge_route = [route_start_point]
         while len(judge_route) > 0:
             current_point = judge_route.pop()

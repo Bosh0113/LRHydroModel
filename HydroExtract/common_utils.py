@@ -152,3 +152,17 @@ def raster_mask(raster_path, mask_path, result_path):
                 set_raster_int_value(result_ds, result_point[0], result_point[1], int(old_no_data))
     old_ds = None
     result_ds = None
+
+
+# 判断索引的像元是否为湖泊/水库：湖泊水库数据集 x索引 y索引
+def is_water_cell(water_dataset, xoff, yoff, water_value):
+    # 判断是否在water数据中
+    judge_in_data = in_data(xoff, yoff, water_dataset.RasterXSize, water_dataset.RasterYSize)
+    # 如果在water数据内
+    if judge_in_data:
+        # 获取water内像元值
+        water_data_value = get_raster_int_value(water_dataset, xoff, yoff)
+        # 如果像元为湖泊/水库则判断当前河流像元是否与湖泊/水库邻接
+        if water_data_value == water_value:
+            return 1
+    return 0
