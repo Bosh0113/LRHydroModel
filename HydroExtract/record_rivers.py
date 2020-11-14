@@ -18,6 +18,8 @@ def record_rivers(work_path, river_tif_path, acc_tif_path):
     if os.path.exists(river_record_txt):
         os.remove(river_record_txt)
 
+    print("Recording rivers...")
+
     # 记录河流信息到文件
     with open(river_record_txt, 'a') as river_f:
         for i in range(river_ds.RasterYSize):
@@ -32,6 +34,8 @@ def record_rivers(work_path, river_tif_path, acc_tif_path):
                     # 记录到文件中
                     river_record_str = ','.join(str(k) for k in river_record_item)
                     river_f.write(river_record_str + '\n')
+
+    print("File write over.")
 
 
 if __name__ == '__main__':

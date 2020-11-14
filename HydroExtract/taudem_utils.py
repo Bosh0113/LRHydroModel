@@ -8,7 +8,7 @@ current_path = os.getcwd().replace("\\", "/")
 def d8_flow_directions(dem_tif_path, dir_tif_path, slope_output_path):
     print("D8 Flow Directions")
     # cmd语句调用TauDEM的D8 Flow Directions程序
-    dir_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/D8Flowdir -fel ' + dem_tif_path + ' -p ' + \
+    dir_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/D8FlowDir -fel ' + dem_tif_path + ' -p ' + \
               dir_tif_path + ' -sd8 ' + slope_output_path
     d = os.system(dir_cmd)
     print(d)
@@ -28,7 +28,7 @@ def d8_contributing_area(dir_tif_path, contributing_area_path):
 def grid_network(dir_tif_path, longest_upstream_path, total_upstream_path, str_order_acc_path):
     print("Grid Network")
     # cmd语句调用TauDEM的Stream Definition By Threshold程序
-    acc_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/Gridnet -p ' + dir_tif_path + ' -plen ' + \
+    acc_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/GridNet -p ' + dir_tif_path + ' -plen ' + \
               longest_upstream_path + ' -tlen ' + total_upstream_path + ' -gord ' + str_order_acc_path
     d = os.system(acc_cmd)
     print(d)
@@ -50,7 +50,7 @@ def stream_reach_and_watershed(dem_tif_path, dir_tif_path, contributing_area_pat
                                str_tree_txt_path, str_coord_txt_path, str_shp_path, ws_tif_path):
     print("Stream Reach And Watershed")
     # cmd语句调用TauDEM的Stream Reach And Watershed程序
-    ws_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/Streamnet -fel ' + dem_tif_path + ' -p ' + \
+    ws_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/StreamNet -fel ' + dem_tif_path + ' -p ' + \
              dir_tif_path + ' -ad8 ' + contributing_area_path + ' -src ' + str_tif_path + ' -ord ' + \
              str_order_path + ' -tree ' + str_tree_txt_path + ' -coord ' + str_coord_txt_path + ' -net ' + \
              str_shp_path + ' -w ' + ws_tif_path

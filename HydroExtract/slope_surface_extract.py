@@ -27,8 +27,10 @@ def get_to_point_ol_data(xoff, yoff):
     global dataset_dir, dataset_ol
     dir_data_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
     to_point = cu.get_to_point(xoff, yoff, dir_data_value)
-    re_data_value = cu.get_raster_int_value(dataset_ol, to_point[0], to_point[1])
-    return re_data_value
+    if len(to_point) < 1:
+        return no_data_value
+    else:
+        return cu.get_raster_int_value(dataset_ol, to_point[0], to_point[1])
 
 
 # 对水体的坡面提取排序：原水体外边界集合 排序后的水体外边界集合 各水体外边界最大汇流累积点位置集合(返回值)
@@ -268,27 +270,29 @@ def buffer_search(o_res_xoff, o_res_yoff, water_ol_buf):
             re_xoff = ol_point_off[0]
             re_yoff = ol_point_off[1]
 
-            # 判断是否已经在破面数据记录
-            ol_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
-            not_recode_result = ol_data_value == no_data_value
-            # 判断是否在水体数据范围内
-            in_water_data = cu.in_data(res_xoff, res_yoff, dataset_res.RasterXSize, dataset_res.RasterYSize)
-            # 若在水体数据中进一步判断是否为水体内像元
-            if in_water_data:
-                data_value = cu.get_raster_int_value(dataset_res, res_xoff, res_yoff)
-                not_in_water = data_value != water_value
-            else:
-                not_in_water = True
-            # 若不是水体像元且未记录则记录，即记录新边界点
-            if not_recode_result and not_in_water:
-                # 添加缓冲区数组记录
-                water_ol_buf.append([re_xoff, re_yoff])
-                # 标记为水体外边界
-                cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_buffer_value)
-            # 若是水体且未记录，则继续搜索
-            if not_recode_result and not not_in_water:
-                cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
-                water_points.append([res_xoff, res_yoff])
+            # 若在数据内
+            if cu.in_data(re_xoff, re_yoff, dataset_ol.RasterXSize, dataset_ol.RasterYSize):
+                # 判断是否已经在破面数据记录
+                ol_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
+                not_recode_result = ol_data_value == no_data_value
+                # 判断是否在水体数据范围内
+                in_water_data = cu.in_data(res_xoff, res_yoff, dataset_res.RasterXSize, dataset_res.RasterYSize)
+                # 若在水体数据中进一步判断是否为水体内像元
+                if in_water_data:
+                    data_value = cu.get_raster_int_value(dataset_res, res_xoff, res_yoff)
+                    not_in_water = data_value != water_value
+                else:
+                    not_in_water = True
+                # 若不是水体像元且未记录则记录，即记录新边界点
+                if not_recode_result and not_in_water:
+                    # 添加缓冲区数组记录
+                    water_ol_buf.append([re_xoff, re_yoff])
+                    # 标记为水体外边界
+                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_buffer_value)
+                # 若是水体且未记录，则继续搜索
+                if not_recode_result and not not_in_water:
+                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
+                    water_points.append([res_xoff, res_yoff])
 
 
 # 提取坡面流路
@@ -361,6 +365,7 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     dataset_ro.SetProjection(dataset_dir.GetProjection())
     dataset_ro.GetRasterBand(1).SetNoDataValue(no_data_value)
 
+    print("Get lakes' outline...")
     for i in range(dataset_res.RasterYSize):
         for j in range(dataset_res.RasterXSize):
             # 获取水体数据某点的值
@@ -372,27 +377,31 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
                 off_point = cu.off_transform(j, i, dataset_res, dataset_ol)
                 re_xoff = off_point[0]
                 re_yoff = off_point[1]
-                # 获取结果数据的值
-                re_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
-                # 若未记录则继续
+                # 若在数据集内
+                if cu.in_data(re_xoff, re_yoff, dataset_ol.RasterXSize, dataset_ol.RasterYSize):
+                    # 获取结果数据的值
+                    re_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
+                    # 若未记录则继续
 
-                if re_data_value != water_value:
-                    # 新建数组用于记录此水体外边界
-                    water_ol_buf = []
-                    # 结果数据记录水体
-                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
-                    # 使用3*3区域生成水体外包围像元集
-                    buffer_search(j, i, water_ol_buf)
+                    if re_data_value != water_value:
+                        # 新建数组用于记录此水体外边界
+                        water_ol_buf = []
+                        # 结果数据记录水体
+                        cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
+                        # 使用3*3区域生成水体外包围像元集
+                        buffer_search(j, i, water_ol_buf)
 
-                    # 若有新的水体外边界则记录到集合
-                    if len(water_ol_buf) > 0:
-                        # 将此水体的外边界记录到集合中
-                        water_ol_bufs.append(water_ol_buf)
+                        # 若有新的水体外边界则记录到集合
+                        if len(water_ol_buf) > 0:
+                            # 将此水体的外边界记录到集合中
+                            water_ol_bufs.append(water_ol_buf)
 
+    print("Order lakes' slope surface...")
     # 对水体的坡面提取排序
     water_ol_bufs_ordered = []
     surface_route_start = water_order(water_ol_bufs, water_ol_bufs_ordered)
 
+    print("Get slope surface...")
     # 沿水体外边界直接非河道入流点提取坡面
     # 坡面id初始化
     start_id = 0
@@ -401,13 +410,16 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     for water_ol_buf in water_ol_bufs_ordered:
         start_id = slope_surface_extract(water_ol_buf, start_id, upstream_inflows)
 
+    print("Union lakes' slope surface...")
     # 合并坡面入流口相邻的坡面
     for upstream_inflow in upstream_inflows:
         surface_merge(upstream_inflow)
 
+    print("Get slope surface route...")
     # 提取坡面流路
     get_surface_route(surface_route_start)
 
+    print("Clear marks...")
     # 清除边界线标记
     for water_ol_buf in water_ol_bufs_ordered:
         clear_buffer(water_ol_buf)
