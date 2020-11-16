@@ -15,10 +15,11 @@ def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_ti
     # 初始化需要赋值的像元集合
     update_cells = [[river_x, river_y]]
     # 更新区域内像元值
+    # print(">>> update cell:", end='')
     while len(update_cells) > 0:
         # 取出要更新的像元索引
         update_cell = update_cells.pop()
-        print(">>> update cell:", update_cell)
+        # print(update_cell, end='')
         # 更新像元值
         cu.set_raster_int_value(watershed_ds, update_cell[0], update_cell[1], watershed_id)
         # print('update: ', update_cell, '->', watershed_id)
@@ -46,7 +47,6 @@ def recode_from_river(watershed_id, river_x, river_y, watershed_tif_path, dir_ti
 
 
 def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_tif_path):
-
     # 创建数据集
     watershed_ds = gdal.Open(watershed_tif_path)
     dir_ds = gdal.Open(dir_tif_path)
@@ -55,8 +55,8 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_
     print("Reading rivers info...")
     # 初始化河系像元索引
     rivers_index = []
+    rivers_info = {}
     with open(river_record_path, 'r') as river_file:
-        rivers_info = {}
         for line in river_file.readlines():
             river_info_str = line.strip('\n')
             river_info = river_info_str.split(',')
@@ -83,7 +83,8 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_
         # 若不在子流域则继续寻找
         if watershed_value < 0:
             del rivers_info[min_acc_river]
-            flag = 1
+            if rivers_info:
+                flag = 1
         # 若在子流域则作为起点
         else:
             # 初始化要遍历的河流起点数组
@@ -196,14 +197,17 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_
         max_ws_id += 1
         watershed_count += 1
         total_count = len(recode_ws_rivers)
-        print("> updating one watershed.....................", watershed_count, "/", total_count)
+        print("\r> updating one watershed.....................%d/%d" % (watershed_count, total_count), end='')
         river_count = 0
+        print('')
         for river_cell in river:
             river_count += 1
             total_r_count = len(river)
-            print(">> update by river cell:", river_count, "/", total_r_count)
+            print("\r>> update by river cell: %d/%d" % (river_count, total_r_count), end='')
             cell_xy = river_cell.split(',')
-            recode_from_river(max_ws_id, int(cell_xy[0]), int(cell_xy[1]), watershed_tif_path, dir_tif_path, water_tif_path, rivers_index)
+            recode_from_river(max_ws_id, int(cell_xy[0]), int(cell_xy[1]), watershed_tif_path, dir_tif_path,
+                              water_tif_path, rivers_index)
+            print(".")
 
     watershed_ds = None
     dir_ds = None
@@ -212,8 +216,10 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_
 if __name__ == '__main__':
     start = time.perf_counter()
     # base_path = "D:/Graduation/Program/Data/10"
-    base_path = "D:/Graduation/Program/Data/14/test_recode_ws"
+    # base_path = "D:/Graduation/Program/Data/14/test_recode_ws"
     # base_path = "D:/Graduation/Program/Data/14/test_recode_ws_mpi"
-    watershed_recode(base_path + "/river_record.txt", base_path + "/watershed.tif", base_path + "/dir.tif", base_path + "/water_revised.tif")
+    base_path = "D:/Graduation/Program/Data/15/result"
+    watershed_recode(base_path + "/river_record.txt", base_path + "/watershed.tif", base_path + "/dir.tif",
+                     base_path + "/water_revised.tif")
     end = time.perf_counter()
     print('Run', end - start, 's')

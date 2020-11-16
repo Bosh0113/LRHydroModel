@@ -54,7 +54,7 @@ def water_revise(water_tif_path, river_tif_path, river_record_path, dir_tif_path
     while update_flag:
         # 标记是否更新完成
         update_flag = 0
-        print("update")
+        print("Update...")
         # 根据水体与河流邻接更新水体
         for index in range(len(river_in_water_data)):
             river_in_water_x = river_in_water_data[index][0]
@@ -102,6 +102,7 @@ def water_revise(water_tif_path, river_tif_path, river_record_path, dir_tif_path
                             cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
                             update_flag = 1
 
+    print("Over.")
     water_ds = None
     river_ds = None
     dir_ds = None
