@@ -110,28 +110,33 @@ def slope_surface_search(xoff, yoff, slope_surface_id, water_buf, upstream_inflo
 # 获取与某入流点相邻的水体外边界上游的未被记录坡面合并的入流点集：x索引 y索引 某水外边界上游入流点的集合 如函数描述(返回值)
 def get_new_slope_surface(xoff, yoff, upstream_inflow, inflow_points):
     global dataset_acc, river_th, dataset_ol
-    neighbor_points = cu.get_8_dir(xoff, yoff)
-    # 遍历周边点
-    for points in neighbor_points:
-        judge_in_data = cu.in_data(points[0], points[1], dataset_ol.RasterXSize, dataset_ol.RasterYSize)
-        if judge_in_data:
-            # 若该点为水体入流点且未记录合并
-            if points in upstream_inflow and points not in inflow_points:
-                # 判断两点间是否穿插河道
-                # 两点若不存在中间点
-                if points[0] == xoff or points[1] == yoff:
-                    no_river = 1
-                else:
-                    # 判断中间点是否为河道
-                    between_data_value1 = cu.get_raster_int_value(dataset_acc, xoff, points[1])
-                    between_data_value2 = cu.get_raster_int_value(dataset_acc, points[0], yoff)
-                    no_river = between_data_value1 < river_th and between_data_value2 < river_th
-                # 若未穿插河道
-                if no_river:
-                    # 记录到当前坡面入流点集
-                    inflow_points.append(points)
-                    # 以此点继续遍历
-                    inflow_points = get_new_slope_surface(points[0], points[1], upstream_inflow, inflow_points)
+    # 初始化搜索数组
+    search_array = [[xoff, yoff]]
+    # 若继续搜索
+    while len(search_array) > 0:
+        cell_xy = search_array.pop()
+        neighbor_points = cu.get_8_dir(cell_xy[0], cell_xy[1])
+        # 遍历周边点
+        for points in neighbor_points:
+            judge_in_data = cu.in_data(points[0], points[1], dataset_ol.RasterXSize, dataset_ol.RasterYSize)
+            if judge_in_data:
+                # 若该点为水体入流点且未记录合并
+                if points in upstream_inflow and points not in inflow_points:
+                    # 判断两点间是否穿插河道
+                    # 两点若不存在中间点
+                    if points[0] == cell_xy[0] or points[1] == cell_xy[1]:
+                        no_river = 1
+                    else:
+                        # 判断中间点是否为河道
+                        between_data_value1 = cu.get_raster_int_value(dataset_acc, cell_xy[0], points[1])
+                        between_data_value2 = cu.get_raster_int_value(dataset_acc, points[0], cell_xy[1])
+                        no_river = between_data_value1 < river_th and between_data_value2 < river_th
+                    # 若未穿插河道
+                    if no_river:
+                        # 记录到当前坡面入流点集
+                        inflow_points.append(points)
+                        # 以此点继续遍历
+                        search_array.append(points)
     return inflow_points
 
 
@@ -353,7 +358,7 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
     result_data_path = work_path + "/water_slope_surface.tif"
-    dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16)
+    dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int32)
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_dir.GetProjection())
     dataset_ol.GetRasterBand(1).SetNoDataValue(no_data_value)
@@ -436,7 +441,8 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
 if __name__ == '__main__':
     start = time.perf_counter()
     # base_path = "D:/Graduation/Program/Data/3"
-    base_path = "D:/Graduation/Program/Data/8/process"
+    # base_path = "D:/Graduation/Program/Data/8/process"
+    base_path = "D:/Graduation/Program/Data/15/process"
     workspace_path = base_path + "/result"
     # get_slope_surface(workspace_path, base_path + "/tashan_99.tif", base_path + "/dir.tif", base_path + "/acc.tif", 300000)
     get_slope_surface(workspace_path, base_path + "/water_revised.tif", base_path + "/dir.tif", base_path + "/acc.tif", 300000)
