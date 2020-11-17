@@ -54,17 +54,20 @@ def water_order(old_water_bufs, new_water_bufs):
                 max_acc_point = point
         # 插入排序
         if len(recode_acc) == 0:
+            # 若为空则为第一个
             recode_acc.append(max_acc)
             new_water_bufs.append(water_buf)
             surface_route_start.append(max_acc_point)
         else:
             for index in range(len(recode_acc)):
                 if recode_acc[index] > max_acc:
+                    # 若为中间值则插入队
                     recode_acc.insert(index, max_acc)
                     new_water_bufs.insert(index, water_buf)
                     surface_route_start.insert(index, max_acc_point)
                     break
                 if index == len(recode_acc) - 1 and recode_acc[index] < max_acc:
+                    # 若无更大值则追加到队尾
                     recode_acc.append(max_acc)
                     new_water_bufs.append(water_buf)
                     surface_route_start.append(max_acc_point)
@@ -277,9 +280,8 @@ def buffer_search(o_res_xoff, o_res_yoff, water_ol_buf):
 
             # 若在数据内
             if cu.in_data(re_xoff, re_yoff, dataset_ol.RasterXSize, dataset_ol.RasterYSize):
-                # 判断是否已经在破面数据记录
-                ol_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
-                not_recode_result = ol_data_value == no_data_value
+                # 判断是否记录在外边界数组
+                in_ol_array = ol_point_off in water_ol_buf
                 # 判断是否在水体数据范围内
                 in_water_data = cu.in_data(res_xoff, res_yoff, dataset_res.RasterXSize, dataset_res.RasterYSize)
                 # 若在水体数据中进一步判断是否为水体内像元
@@ -289,13 +291,16 @@ def buffer_search(o_res_xoff, o_res_yoff, water_ol_buf):
                 else:
                     not_in_water = True
                 # 若不是水体像元且未记录则记录，即记录新边界点
-                if not_recode_result and not_in_water:
+                if not in_ol_array and not_in_water:
                     # 添加缓冲区数组记录
                     water_ol_buf.append([re_xoff, re_yoff])
                     # 标记为水体外边界
                     cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_buffer_value)
+                # 判断是否在结果数据中记录水体
+                ol_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
+                recode_water = ol_data_value == water_value
                 # 若是水体且未记录，则继续搜索
-                if not_recode_result and not not_in_water:
+                if not recode_water and not not_in_water:
                     cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
                     water_points.append([res_xoff, res_yoff])
 
@@ -319,13 +324,13 @@ def get_surface_route(surface_route_start):
             if ol_value != water_value and acc_value < river_th:
                 # 记录此点为坡面流路
                 cu.set_raster_int_value(dataset_ro, xoff, yoff, surface_route_value)
-            # 获取此点流向
-            dir_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
-            # 获取其流向的点
-            to_point = cu.get_to_point(xoff, yoff, dir_value)
-            if len(to_point) > 0:
-                # 加入判断数组
-                judge_route.append(to_point)
+                # 获取此点流向
+                dir_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
+                # 获取其流向的点
+                to_point = cu.get_to_point(xoff, yoff, dir_value)
+                if len(to_point) > 0 and cu.in_data(to_point[0], to_point[1], dataset_acc.RasterXSize, dataset_acc.RasterYSize):
+                    # 加入判断数组
+                    judge_route.append(to_point)
 
 
 # 清除边界线标记：某水体的外边界
@@ -401,12 +406,12 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
                             # 将此水体的外边界记录到集合中
                             water_ol_bufs.append(water_ol_buf)
 
-    print("Order lakes' slope surface...")
+    print("Sort the extraction of slope surface...")
     # 对水体的坡面提取排序
     water_ol_bufs_ordered = []
     surface_route_start = water_order(water_ol_bufs, water_ol_bufs_ordered)
 
-    print("Get slope surface...")
+    print("Search slope surface inflow points...")
     # 沿水体外边界直接非河道入流点提取坡面
     # 坡面id初始化
     start_id = 0
@@ -415,12 +420,12 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     for water_ol_buf in water_ol_bufs_ordered:
         start_id = slope_surface_extract(water_ol_buf, start_id, upstream_inflows)
 
-    print("Union lakes' slope surface...")
+    print("Merge lakes' slope surface...")
     # 合并坡面入流口相邻的坡面
     for upstream_inflow in upstream_inflows:
         surface_merge(upstream_inflow)
 
-    print("Get slope surface route...")
+    print("Record slope surface route...")
     # 提取坡面流路
     get_surface_route(surface_route_start)
 

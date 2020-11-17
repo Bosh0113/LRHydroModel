@@ -197,7 +197,7 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_
         max_ws_id += 1
         watershed_count += 1
         total_count = len(recode_ws_rivers)
-        print("\r> updating one watershed.....................%d/%d" % (watershed_count, total_count), end='')
+        print("\r> updating watersheds.....................%d/%d" % (watershed_count, total_count), end='')
         river_count = 0
         print('')
         for river_cell in river:
@@ -207,7 +207,7 @@ def watershed_recode(river_record_path, watershed_tif_path, dir_tif_path, water_
             cell_xy = river_cell.split(',')
             recode_from_river(max_ws_id, int(cell_xy[0]), int(cell_xy[1]), watershed_tif_path, dir_tif_path,
                               water_tif_path, rivers_index)
-            print(".")
+        print(".")
 
     watershed_ds = None
     dir_ds = None
