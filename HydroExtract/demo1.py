@@ -96,7 +96,7 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     print("Run time: ", over_time - stage_time, 's')
 
     # 复制坡面结果数据和重分类
-    print("-> Copy/Reclassify Slope surface route...")
+    print("-> Copy/Reclassify Slope surface...")
     stage_time = time.perf_counter()
     w_w_surface_ds = gdal.Open(process_path + "/water_slope_surface.tif")
     no_data_value = w_w_surface_ds.GetRasterBand(1).GetNoDataValue()
@@ -116,7 +116,8 @@ if __name__ == '__main__':
     # 数据基本路径
     # base_path = "D:/Graduation/Program/Data/4"
     # base_path = "D:/Graduation/Program/Data/5"
-    base_path = "D:/Graduation/Program/Data/15"
+    # base_path = "D:/Graduation/Program/Data/15"
+    base_path = "D:/Graduation/Program/Data/16"
     # DEM数据路径
     dem_data_path = base_path + "/dem_fill.tif"
     # 湖泊/水库数据路径

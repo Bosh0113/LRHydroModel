@@ -14,12 +14,12 @@ def d8_flow_directions(dem_tif_path, dir_tif_path, slope_output_path):
     print(d)
 
 
-# 计算贡献区：流向(input) 贡献区(output)
+# 计算贡献区：流向(input) 贡献区(output) [边界污染(optional)](此处不考虑)
 def d8_contributing_area(dir_tif_path, contributing_area_path):
     print("D8 Contributing Area")
     # cmd语句调用TauDEM的D8 Contributing Area程序
     con_cmd = 'mpiexec -np ' + str(4) + ' ' + current_path + '/TauDEM/AreaD8 -p ' + dir_tif_path + ' -ad8 ' + \
-              contributing_area_path
+              contributing_area_path + ' -nc'
     d = os.system(con_cmd)
     print(d)
 
