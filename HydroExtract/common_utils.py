@@ -17,6 +17,11 @@ def set_raster_int_value(dataset, x, y, value):
     dataset.GetRasterBand(1).WriteRaster(x, y, 1, 1, struct.pack("i", value))
 
 
+# 写入栅格数据值(float)：数据集 x索引 y索引 值
+def set_raster_float_value(dataset, x, y, value):
+    dataset.GetRasterBand(1).WriteRaster(x, y, 1, 1, struct.pack("f", value))
+
+
 # 判断是否超出数据范围：x索引 y索引 x最大值 y最大值
 def in_data(x, y, x_size, y_size):
     # 左侧超出
@@ -131,8 +136,8 @@ def tif_reclassify(old_tif_path, updated_tif_path, update_value_2array, new_valu
     copy_ds = None
 
 
-# 栅格数据掩膜处理：原始数据 掩膜数据 结果数据
-def raster_mask(raster_path, mask_path, result_path):
+# 栅格数据裁切掩膜处理：原始数据 掩膜数据 结果数据
+def raster_erase_mask(raster_path, mask_path, result_path, data_type="int"):
     # 获取数据集
     old_ds = gdal.Open(raster_path)
     mask_ds = gdal.Open(mask_path)
@@ -149,7 +154,11 @@ def raster_mask(raster_path, mask_path, result_path):
             mask_data = get_raster_int_value(mask_ds, i, j)
             if mask_data != mask_no_data:
                 result_point = off_transform(i, j, mask_ds, result_ds)
-                set_raster_int_value(result_ds, result_point[0], result_point[1], int(old_no_data))
+                if in_data(result_point[0], result_point[1], result_ds.RasterXSize, result_ds.RasterYSize):
+                    if data_type == "int":
+                        set_raster_int_value(result_ds, result_point[0], result_point[1], int(old_no_data))
+                    if data_type == "float":
+                        set_raster_float_value(result_ds, result_point[0], result_point[1], old_no_data)
     old_ds = None
     result_ds = None
 
