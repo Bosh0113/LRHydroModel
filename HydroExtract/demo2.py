@@ -11,8 +11,8 @@ import shutil
 import gdal
 
 
-# 示例：工作空间路径 DEM数据路径 湖泊/水库数据路径 河流提取阈值
-def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
+# 示例：工作空间路径 DEM数据路径 流向数据路径 汇流累积量数据路径 湖泊/水库数据路径 河流提取阈值
+def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path, river_threshold):
 
     start = time.perf_counter()
 
@@ -20,15 +20,6 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     process_path = workspace_path + "/process"
     if not os.path.exists(process_path):
         os.makedirs(process_path)
-
-    # 计算流向、汇流累积量
-    print("----------------------------Get Direction and Accumulation--------------------------")
-    stage_time = time.perf_counter()
-    dir_tif_path = process_path + "/dir.tif"
-    acc_tif_path = process_path + "/acc.tif"
-    gda.get_dir_acc(process_path, dem_tif_path, dir_tif_path, acc_tif_path)
-    over_time = time.perf_counter()
-    print("Run time: ", over_time - stage_time, 's')
 
     # 提取河系
     print("-------------------------------------Get Rivers-------------------------------------")
@@ -41,7 +32,7 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     print("------------------------------------Record Rivers------------------------------------")
     stage_time = time.perf_counter()
     river_tif_path = process_path + "/stream.tif"
-    rr.record_rivers(process_path, river_tif_path, process_path + "/acc.tif")
+    rr.record_rivers(process_path, river_tif_path, acc_tif_path)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -117,20 +108,18 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
 if __name__ == '__main__':
     demo_start = time.perf_counter()
     # 数据基本路径
-    # base_path = "D:/Graduation/Program/Data/4"
-    # base_path = "D:/Graduation/Program/Data/5"
-    # base_path = "D:/Graduation/Program/Data/15"
-    base_path = "D:/Graduation/Program/Data/18"
+    base_path = "D:/Graduation/Program/Data/19"
     # DEM数据路径
     dem_data_path = base_path + "/dem_fill.tif"
+    # 流向数据路径
+    dir_data_path = base_path + "/dir.tif"
+    # 汇流累积量数据路径
+    acc_data_path = base_path + "/acc.tif"
     # 湖泊/水库数据路径
-    # lake_data_path = base_path + "/tashan_99.tif"
     lake_data_path = base_path + "/lake_99.tif"
     # 河流提取阈值
-    # extract_threshold = 300000
-    # extract_threshold = 30000
-    extract_threshold = 3000
+    extract_threshold = 20
     # 生成示例结果
-    demo1(base_path, dem_data_path, lake_data_path, extract_threshold)
+    demo2(base_path, dem_data_path, dir_data_path, acc_data_path, lake_data_path, extract_threshold)
     demo_end = time.perf_counter()
     print('Demo total time: ', demo_end - demo_start, 's')

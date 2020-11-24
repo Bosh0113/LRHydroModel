@@ -70,37 +70,39 @@ def water_revise(water_tif_path, river_tif_path, river_record_path, dir_tif_path
                 dir_value = cu.get_raster_int_value(dir_ds, dir_off[0], dir_off[1])
                 # 获取该处在river的下一个像元索引
                 to_river_point = cu.get_to_point(river_off[0], river_off[1], dir_value)
-                # 获取该点在water中的索引
-                w_n_off = cu.off_transform(to_river_point[0], to_river_point[1], river_ds, water_ds)
-                to_point_is_water = cu.is_water_cell(water_ds, w_n_off[0], w_n_off[1], water_value)
-                if to_point_is_water:
-                    # 若当前像元与下游像元x相同
-                    if river_in_water_x == w_n_off[0]:
-                        # 判断当前像元y方向上下是否为湖泊/水库
-                        r_in_w_n0_is_water = cu.is_water_cell(water_ds, river_in_water_x - 1, river_in_water_y, water_value)
-                        r_in_w_n1_is_water = cu.is_water_cell(water_ds, river_in_water_x + 1, river_in_water_y, water_value)
-                        if r_in_w_n0_is_water or r_in_w_n1_is_water:
-                            # 更新water此处为湖泊/水库
-                            cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
-                            update_flag = 1
-                    # 若当前像元与下游像元y相同
-                    elif river_in_water_y == w_n_off[1]:
-                        # 判断当前像元y方向上下是否为湖泊/水库
-                        r_in_w_n0_is_water = cu.is_water_cell(water_ds, river_in_water_x, river_in_water_y - 1, water_value)
-                        r_in_w_n1_is_water = cu.is_water_cell(water_ds, river_in_water_x, river_in_water_y + 1, water_value)
-                        if r_in_w_n0_is_water or r_in_w_n1_is_water:
-                            # 更新water此处为湖泊/水库
-                            cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
-                            update_flag = 1
-                    # 若当前像元与下游像元不在xy轴共线
-                    else:
-                        # 判断两像元公共邻接像元是否为湖泊/水库
-                        r_in_w_n0_is_water = cu.is_water_cell(water_ds, river_in_water_x, w_n_off[1], water_value)
-                        r_in_w_n1_is_water = cu.is_water_cell(water_ds, w_n_off[0], river_in_water_y, water_value)
-                        if r_in_w_n0_is_water or r_in_w_n1_is_water:
-                            # 更新water此处为湖泊/水库
-                            cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
-                            update_flag = 1
+                # 判断是否能得到下游（应对内流区问题）
+                if len(to_river_point) > 0:
+                    # 获取该点在water中的索引
+                    w_n_off = cu.off_transform(to_river_point[0], to_river_point[1], river_ds, water_ds)
+                    to_point_is_water = cu.is_water_cell(water_ds, w_n_off[0], w_n_off[1], water_value)
+                    if to_point_is_water:
+                        # 若当前像元与下游像元x相同
+                        if river_in_water_x == w_n_off[0]:
+                            # 判断当前像元y方向上下是否为湖泊/水库
+                            r_in_w_n0_is_water = cu.is_water_cell(water_ds, river_in_water_x - 1, river_in_water_y, water_value)
+                            r_in_w_n1_is_water = cu.is_water_cell(water_ds, river_in_water_x + 1, river_in_water_y, water_value)
+                            if r_in_w_n0_is_water or r_in_w_n1_is_water:
+                                # 更新water此处为湖泊/水库
+                                cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
+                                update_flag = 1
+                        # 若当前像元与下游像元y相同
+                        elif river_in_water_y == w_n_off[1]:
+                            # 判断当前像元y方向上下是否为湖泊/水库
+                            r_in_w_n0_is_water = cu.is_water_cell(water_ds, river_in_water_x, river_in_water_y - 1, water_value)
+                            r_in_w_n1_is_water = cu.is_water_cell(water_ds, river_in_water_x, river_in_water_y + 1, water_value)
+                            if r_in_w_n0_is_water or r_in_w_n1_is_water:
+                                # 更新water此处为湖泊/水库
+                                cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
+                                update_flag = 1
+                        # 若当前像元与下游像元不在xy轴共线
+                        else:
+                            # 判断两像元公共邻接像元是否为湖泊/水库
+                            r_in_w_n0_is_water = cu.is_water_cell(water_ds, river_in_water_x, w_n_off[1], water_value)
+                            r_in_w_n1_is_water = cu.is_water_cell(water_ds, w_n_off[0], river_in_water_y, water_value)
+                            if r_in_w_n0_is_water or r_in_w_n1_is_water:
+                                # 更新water此处为湖泊/水库
+                                cu.set_raster_int_value(water_ds, river_in_water_x, river_in_water_y, water_value)
+                                update_flag = 1
 
     print("Over.")
     water_ds = None
