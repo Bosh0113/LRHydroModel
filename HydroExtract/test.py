@@ -1,27 +1,27 @@
-import common_utils as cu
-import taudem_utils as tu
-import water_revise as wr
+import slope_surface_extract as sse
 import os
 import time
 
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    workspace_path = "D:/Graduation/Program/Data/19"
+    workspace_path = "D:/Graduation/Program/Data/19/test"
 
     process_path = workspace_path + "/process"
+    if not os.path.exists(process_path):
+        os.makedirs(process_path)
     work_path = workspace_path + "/result"
     if not os.path.exists(work_path):
         os.makedirs(work_path)
 
-    # 测试水体范围修正
-    water_path = workspace_path + "/lake_99.tif"
-    water_tif_path = work_path + "/water_revise.tif"
-    river_tif_path = process_path + "/stream.tif"
-    river_record_path = process_path + "/river_record.txt"
+    # 提取河网
+    acc_tif_path = workspace_path + "/acc.tif"
+    water_tif_path = workspace_path + "/water_revise.tif"
     dir_tif_path = workspace_path + "/dir.tif"
-    cu.copy_tif_data(water_path, water_tif_path)
-    wr.water_revise(water_tif_path, river_tif_path, river_record_path, dir_tif_path)
+
+    # 提取坡面
+    sse.get_slope_surface(work_path, water_tif_path, dir_tif_path, acc_tif_path, 20)
 
     end = time.perf_counter()
     print('Run', end - start, 's')
+    print("改了acc转换")
