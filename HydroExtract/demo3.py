@@ -1,4 +1,4 @@
-import get_dir_acc as gda
+import direction_reclassify as dc
 import river_extract as re
 import watershed_extract as we
 import water_revise as wr
@@ -21,6 +21,14 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     if not os.path.exists(process_path):
         os.makedirs(process_path)
 
+    # 流向数据重分类
+    print("--------------------------------Reclassify Direction--------------------------------")
+    stage_time = time.perf_counter()
+    dir_reclass_tif = process_path + "dir_reclass.tif"
+    dc.dir_reclassify(dir_tif_path, dir_reclass_tif)
+    over_time = time.perf_counter()
+    print("Run time: ", over_time - stage_time, 's')
+
     # 提取河系
     print("-------------------------------------Get Rivers-------------------------------------")
     stage_time = time.perf_counter()
@@ -41,14 +49,14 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     stage_time = time.perf_counter()
     water_revised_path = process_path + "/water_revised.tif"
     cu.copy_tif_data(water_tif_path, water_revised_path)
-    wr.water_revise(water_revised_path, river_tif_path, process_path + "/river_record.txt", dir_tif_path)
+    wr.water_revise(water_revised_path, river_tif_path, process_path + "/river_record.txt", dir_reclass_tif)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
     # 提取坡面和湖泊/水库
     print("----------------------------------Get Slope Surface----------------------------------")
     stage_time = time.perf_counter()
-    sse.get_slope_surface(process_path, water_revised_path, dir_tif_path, acc_tif_path, river_threshold)
+    sse.get_slope_surface(process_path, water_revised_path, dir_reclass_tif, acc_tif_path, river_threshold)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -56,7 +64,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     print("------------------------------------Get Watershed-----------------------------------")
     stage_time = time.perf_counter()
     water_s_s_tif_path = process_path + "/water_slope_surface.tif"
-    we.watershed_extract(process_path, dem_tif_path, dir_tif_path, acc_tif_path, river_tif_path, water_s_s_tif_path)
+    we.watershed_extract(process_path, dem_tif_path, dir_reclass_tif, acc_tif_path, river_tif_path, water_s_s_tif_path)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -105,12 +113,13 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     print('Total time: ', end - start, 's')
 
 
+# 测试直接使用DEM、汇流、原始流向等得到结果数据
 if __name__ == '__main__':
     demo_start = time.perf_counter()
     # 数据基本路径
-    base_path = "D:/Graduation/Program/Data/19"
+    base_path = "D:/Graduation/Program/Data/20"
     # DEM数据路径
-    dem_data_path = base_path + "/dem_fill.tif"
+    dem_data_path = base_path + "/dem.tif"
     # 流向数据路径
     dir_data_path = base_path + "/dir.tif"
     # 汇流累积量数据路径

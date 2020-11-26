@@ -114,6 +114,7 @@ def demo1(workspace_path, dem_tif_path, water_tif_path, river_threshold):
     print('Total time: ', end - start, 's')
 
 
+# 测试由DEM开始经过提取流向、汇流等得到结果数据
 if __name__ == '__main__':
     demo_start = time.perf_counter()
     # 数据基本路径

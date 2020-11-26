@@ -2,9 +2,14 @@ import struct
 import gdal
 
 
-# 获取栅格数据值：数据集 x索引 y索引
+# 获取栅格数据值(signed int)：数据集 x索引 y索引
 def get_raster_int_value(dataset, x, y):
     return int.from_bytes(dataset.GetRasterBand(1).ReadRaster(x, y, 1, 1), 'little', signed=True)
+
+
+# 获取栅格数据值(unsigned int)：数据集 x索引 y索引
+def get_raster_un_int_value(dataset, x, y):
+    return int.from_bytes(dataset.GetRasterBand(1).ReadRaster(x, y, 1, 1), 'little', signed=False)
 
 
 # 获取栅格数据值(float)： 数据集 x索引 y索引
@@ -40,26 +45,7 @@ def in_data(x, y, x_size, y_size):
 
 
 # 根据流向得到指向的栅格索引
-def get_to_point(x, y, o_dir):
-    dir = abs(o_dir)
-    # if dir == 1:
-    #     return [x + 1, y]
-    # elif dir == 2:
-    #     return [x + 1, y + 1]
-    # elif dir == 4:
-    #     return [x, y + 1]
-    # elif dir == 8:
-    #     return [x - 1, y + 1]
-    # elif dir == 16:
-    #     return [x - 1, y]
-    # elif dir == 32:
-    #     return [x - 1, y - 1]
-    # elif dir == 64:
-    #     return [x, y - 1]
-    # elif dir == 128:
-    #     return [x + 1, y - 1]
-    # else:
-    #     return []
+def get_to_point(x, y, dir):
     if dir == 1:
         return [x + 1, y]
     elif dir == 8:
@@ -126,10 +112,9 @@ def tif_reclassify(old_tif_path, updated_tif_path, update_value_2array, new_valu
     for j in range(copy_ds.RasterYSize):
         for i in range(copy_ds.RasterXSize):
             data_value = get_raster_int_value(copy_ds, i, j)
-            for k in range(len(update_value_2array)):
+            for k in range(0, len(update_value_2array), 1):
                 if data_value in update_value_2array[k]:
-                    index = update_value_2array[k].index(data_value)
-                    new_value = new_value_array[index]
+                    new_value = new_value_array[k]
                     set_raster_int_value(copy_ds, i, j, new_value)
                     break
     old_ds = None
