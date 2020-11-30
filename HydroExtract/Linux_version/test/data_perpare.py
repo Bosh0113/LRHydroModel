@@ -48,12 +48,12 @@ def test(work_path):
 	print(tiled_raster_layer.layer_metadata.extent)
 	tiled_raster_layer.save_stitched(acc_tif_path)
 
-	# lake_tif_path = '/usr/local/large_scale_hydro/result/lakes.tif'
-	# print("Get Lakes")
-	# tiled_raster_layer = gps.query(uri="file:///usr/local/large_scale_hydro/catalog", layer_name="lakes", layer_zoom=0, query_geom=poly)
-	# print(tiled_raster_layer.count())
-	# print(tiled_raster_layer.layer_metadata.extent)
-	# tiled_raster_layer.save_stitched(lake_tif_path)
+	lake_tif_path = process_path + '/lakes.tif'
+	print("Get Lakes")
+	tiled_raster_layer = gps.query(uri="file:///usr/local/large_scale_hydro/catalog", layer_name="lakes", layer_zoom=0, query_geom=poly)
+	print(tiled_raster_layer.count())
+	print(tiled_raster_layer.layer_metadata.extent)
+	tiled_raster_layer.save_stitched(lake_tif_path)
 
 
 if __name__ == '__main__':

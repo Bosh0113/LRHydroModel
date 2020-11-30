@@ -1,18 +1,19 @@
-import get_dir_acc as gda
+import direction_reclassify as dc
 import river_extract as re
 import watershed_extract as we
 import water_revise as wr
 import slope_surface_extract as sse
 import common_utils as cu
 import record_rivers as rr
+import clip_tif as ct
 import os
 import time
 import shutil
 import gdal
 
 
-# 示例：工作空间路径 DEM数据路径 流向数据路径 汇流累积量数据路径 湖泊/水库数据路径 河流提取阈值
-def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path, river_threshold):
+# 示例：工作空间路径 DEM数据路径 流向数据路径 汇流累积量数据路径 湖泊/水库数据路径 GeoJson范围数据路径 河流提取阈值
+def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path, geojson_path, river_threshold):
 
     start = time.perf_counter()
 
@@ -21,10 +22,32 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     if not os.path.exists(process_path):
         os.makedirs(process_path)
 
+    # 裁剪研究区域的数据
+    print("----------------------------------Crop Raster Data----------------------------------")
+    stage_time = time.perf_counter()
+    dem_clip = process_path + "/dem_clip.tif"
+    dir_clip = process_path + "/dir_clip.tif"
+    acc_clip = process_path + "/acc_clip.tif"
+    lakes_clip = process_path + "/lakes_clip.tif"
+    ct.geojson_clip_tif(geojson_path, dem_tif_path, dem_clip)
+    ct.geojson_clip_tif(geojson_path, dir_tif_path, dir_clip)
+    ct.geojson_clip_tif(geojson_path, acc_tif_path, acc_clip)
+    ct.geojson_clip_tif(geojson_path, water_tif_path, lakes_clip)
+    over_time = time.perf_counter()
+    print("Run time: ", over_time - stage_time, 's')
+
+    # 流向数据重分类
+    print("--------------------------------Reclassify Direction--------------------------------")
+    stage_time = time.perf_counter()
+    dir_reclass_tif = process_path + "/dir_reclass.tif"
+    dc.dir_reclassify(dir_clip, dir_reclass_tif)
+    over_time = time.perf_counter()
+    print("Run time: ", over_time - stage_time, 's')
+
     # 提取河系
     print("-------------------------------------Get Rivers-------------------------------------")
     stage_time = time.perf_counter()
-    re.get_river(process_path, acc_tif_path, river_threshold)
+    re.get_river(process_path, acc_clip, river_threshold)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -32,7 +55,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     print("------------------------------------Record Rivers------------------------------------")
     stage_time = time.perf_counter()
     river_tif_path = process_path + "/stream.tif"
-    rr.record_rivers(process_path, river_tif_path, acc_tif_path)
+    rr.record_rivers(process_path, river_tif_path, acc_clip)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -40,15 +63,15 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     print("----------------------------------Get Revised Water----------------------------------")
     stage_time = time.perf_counter()
     water_revised_path = process_path + "/water_revised.tif"
-    cu.copy_tif_data(water_tif_path, water_revised_path)
-    wr.water_revise(water_revised_path, river_tif_path, process_path + "/river_record.txt", dir_tif_path)
+    cu.copy_tif_data(lakes_clip, water_revised_path)
+    wr.water_revise(water_revised_path, river_tif_path, process_path + "/river_record.txt", dir_reclass_tif)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
     # 提取坡面和湖泊/水库
     print("----------------------------------Get Slope Surface----------------------------------")
     stage_time = time.perf_counter()
-    sse.get_slope_surface(process_path, water_revised_path, dir_tif_path, acc_tif_path, river_threshold, -9)
+    sse.get_slope_surface(process_path, water_revised_path, dir_reclass_tif, acc_clip, river_threshold, -9)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -56,7 +79,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     print("------------------------------------Get Watershed-----------------------------------")
     stage_time = time.perf_counter()
     water_s_s_tif_path = process_path + "/water_slope_surface.tif"
-    we.watershed_extract(process_path, dem_tif_path, dir_tif_path, acc_tif_path, river_tif_path, water_s_s_tif_path)
+    we.watershed_extract(process_path, dem_clip, dir_reclass_tif, acc_clip, river_tif_path, water_s_s_tif_path)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -105,22 +128,24 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     print('Total time: ', end - start, 's')
 
 
-# 测试直接使用DEM、汇流、重分类后的流向等得到结果数据
+# 测试直接使用DEM、汇流、原始流向等得到结果数据
 if __name__ == '__main__':
     demo_start = time.perf_counter()
     # 数据基本路径
-    base_path = "D:/Graduation/Program/Data/19"
+    base_path = "D:/Graduation/Program/Data/21/test1"
     # DEM数据路径
-    dem_data_path = base_path + "/dem_fill.tif"
+    dem_data_path = base_path + "/dem.tif"
     # 流向数据路径
     dir_data_path = base_path + "/dir.tif"
     # 汇流累积量数据路径
     acc_data_path = base_path + "/acc.tif"
     # 湖泊/水库数据路径
-    lake_data_path = base_path + "/lake_99.tif"
+    lake_data_path = base_path + "/lakes.tif"
+    # 范围数据(GeoJson)
+    geojson_file_path = base_path + "/polygon.geojson"
     # 河流提取阈值
     extract_threshold = 20
     # 生成示例结果
-    demo2(base_path, dem_data_path, dir_data_path, acc_data_path, lake_data_path, extract_threshold)
+    demo2(base_path, dem_data_path, dir_data_path, acc_data_path, lake_data_path, geojson_file_path, extract_threshold)
     demo_end = time.perf_counter()
     print('Demo total time: ', demo_end - demo_start, 's')

@@ -5,6 +5,14 @@ import taudem_utils as tu
 import common_utils as cu
 
 
+# 获取NoData标识
+def get_nodata_value(data_ds):
+    nodata = data_ds.GetRasterBand(1).GetNoDataValue()
+    if nodata is None:
+        nodata = 0
+    return nodata
+
+
 # 栅格数据裁切掩膜处理：DEM数据 流向数据 汇流累积数据 河网数据 坡面和湖泊/水库范围数据 结果数据路径
 def watershed_erase_area(dem_tif_path, dir_tif_path, acc_tif_path, stream_tif_path, water_s_s_tif_path, result_path):
 
@@ -18,11 +26,11 @@ def watershed_erase_area(dem_tif_path, dir_tif_path, acc_tif_path, stream_tif_pa
     mask_ds = gdal.Open(water_s_s_tif_path)
 
     # 获取无数据标识
-    dem_no_data = dem_old_ds.GetRasterBand(1).GetNoDataValue()
-    dir_no_data = dir_old_ds.GetRasterBand(1).GetNoDataValue()
-    acc_no_data = acc_old_ds.GetRasterBand(1).GetNoDataValue()
-    stream_no_data = stream_old_ds.GetRasterBand(1).GetNoDataValue()
-    mask_no_data = mask_ds.GetRasterBand(1).GetNoDataValue()
+    dem_no_data = get_nodata_value(dem_old_ds)
+    dir_no_data = get_nodata_value(dir_old_ds)
+    acc_no_data = get_nodata_value(acc_old_ds)
+    stream_no_data = get_nodata_value(stream_old_ds)
+    mask_no_data = get_nodata_value(mask_ds)
 
     # 新数据路径
     dem_new_path = result_path + "/dem_erase.tif"

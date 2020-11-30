@@ -48,7 +48,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     # 提取坡面和湖泊/水库
     print("----------------------------------Get Slope Surface----------------------------------")
     stage_time = time.perf_counter()
-    sse.get_slope_surface(process_path, water_revised_path, dir_tif_path, acc_tif_path, river_threshold)
+    sse.get_slope_surface(process_path, water_revised_path, dir_tif_path, acc_tif_path, river_threshold, -9)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 

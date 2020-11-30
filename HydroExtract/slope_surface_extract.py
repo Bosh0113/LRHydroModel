@@ -335,7 +335,7 @@ def clear_buffer(water_buf):
 
 
 # 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据
-def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_threshold):
+def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_threshold, no_data=None):
     print("Extract Start")
     global dataset_res, dataset_dir, dataset_acc, dataset_ol, dataset_ro, river_th, water_ol_bufs, no_data_value
     river_th = river_threshold
@@ -347,7 +347,10 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     dataset_dir = gdal.Open(dir_data_path)
     dataset_acc = gdal.Open(acc_data_path)
 
-    no_data_value = int(dataset_res.GetRasterBand(1).GetNoDataValue())
+    if no_data is not None:
+        no_data_value = no_data
+    else:
+        no_data_value = int(dataset_res.GetRasterBand(1).GetNoDataValue())
     dir_geotransform = dataset_dir.GetGeoTransform()
 
     full_geotransform = dir_geotransform
@@ -443,7 +446,8 @@ if __name__ == '__main__':
     # base_path = "D:/Graduation/Program/Data/14/process"
     workspace_path = base_path + "/result"
     # get_slope_surface(workspace_path, base_path + "/tashan_99.tif", base_path + "/dir.tif", base_path + "/acc.tif", 300000)
-    get_slope_surface(workspace_path, base_path + "/water_revised.tif", base_path + "/dir.tif", base_path + "/acc.tif", 300000)
+    get_slope_surface(workspace_path, base_path + "/water_revised.tif", base_path + "/dir.tif", base_path + "/acc.tif",
+                      300000)
     # for array in water_ol_bufs:
     #     print(array)
     end = time.perf_counter()

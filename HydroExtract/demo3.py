@@ -24,7 +24,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     # 流向数据重分类
     print("--------------------------------Reclassify Direction--------------------------------")
     stage_time = time.perf_counter()
-    dir_reclass_tif = process_path + "dir_reclass.tif"
+    dir_reclass_tif = process_path + "/dir_reclass.tif"
     dc.dir_reclassify(dir_tif_path, dir_reclass_tif)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
@@ -56,7 +56,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     # 提取坡面和湖泊/水库
     print("----------------------------------Get Slope Surface----------------------------------")
     stage_time = time.perf_counter()
-    sse.get_slope_surface(process_path, water_revised_path, dir_reclass_tif, acc_tif_path, river_threshold)
+    sse.get_slope_surface(process_path, water_revised_path, dir_reclass_tif, acc_tif_path, river_threshold, -9)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -117,7 +117,7 @@ def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
 if __name__ == '__main__':
     demo_start = time.perf_counter()
     # 数据基本路径
-    base_path = "D:/Graduation/Program/Data/20"
+    base_path = "D:/Graduation/Program/Data/21"
     # DEM数据路径
     dem_data_path = base_path + "/dem.tif"
     # 流向数据路径
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     # 汇流累积量数据路径
     acc_data_path = base_path + "/acc.tif"
     # 湖泊/水库数据路径
-    lake_data_path = base_path + "/lake_99.tif"
+    lake_data_path = base_path + "/lakes.tif"
     # 河流提取阈值
     extract_threshold = 20
     # 生成示例结果
