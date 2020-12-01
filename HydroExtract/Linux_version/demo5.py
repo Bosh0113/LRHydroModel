@@ -6,21 +6,45 @@ import slope_surface_extract as sse
 import common_utils as cu
 import record_rivers as rr
 import clip_tif as ct
+import data_search as ds
 import os
 import time
 import shutil
 import gdal
 
 
-# 示例：工作空间路径 DEM数据路径 流向数据路径 汇流累积量数据路径 湖泊/水库数据路径 GeoJson范围数据路径 河流提取阈值
-def demo4(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path, geojson_path, river_threshold):
+# 示例：工作空间路径 GeoJson范围数据路径 河流提取阈值
+def demo5(workspace_path, catalog_path, geojson_path, river_threshold):
 
     start = time.perf_counter()
+
+    # 工作空间路径
+    data_path = workspace_path + "/data"
+    if not os.path.exists(data_path):
+        os.makedirs(data_path)
+
+    # 查询计算区域的数据
+    print("----------------------------------Search Raster Data----------------------------------")
+    stage_time = time.perf_counter()
+    # DEM数据路径
+    dem_tif_path = data_path + "/dem.tif"
+    # 流向数据路径
+    dir_tif_path = data_path + "/dir.tif"
+    # 汇流累积量数据路径
+    acc_tif_path = data_path + "/acc.tif"
+    # 湖泊/水库数据路径
+    water_tif_path = data_path + "/lakes.tif"
+    print("Output Data.")
+    ds.data_search(catalog_path, geojson_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path)
+
+    over_time = time.perf_counter()
+    print("Run time: ", over_time - stage_time, 's')
 
     # 工作空间路径
     process_path = workspace_path + "/process"
     if not os.path.exists(process_path):
         os.makedirs(process_path)
+
 
     # 裁剪研究区域的数据
     print("----------------------------------Crop Raster Data----------------------------------")
@@ -123,7 +147,14 @@ def demo4(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
-    print("------Over------")
+    print("---------------------------------Delete Temporary Files-----------------------------")
+    stage_time = time.perf_counter()
+    print("Delete Folders...")
+    shutil.rmtree(process_path)
+    shutil.rmtree(data_path)
+    over_time = time.perf_counter()
+    print("Run time: ", over_time - stage_time, 's')
+    print("----------------------------------------Over----------------------------------------")
     end = time.perf_counter()
     print('Total time: ', end - start, 's')
 
@@ -132,20 +163,16 @@ def demo4(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_pa
 if __name__ == '__main__':
     demo_start = time.perf_counter()
     # 数据基本路径
-    base_path = "D:/Graduation/Program/Data/21/test1"
-    # DEM数据路径
-    dem_data_path = base_path + "/dem.tif"
-    # 流向数据路径
-    dir_data_path = base_path + "/dir.tif"
-    # 汇流累积量数据路径
-    acc_data_path = base_path + "/acc.tif"
-    # 湖泊/水库数据路径
-    lake_data_path = base_path + "/lakes.tif"
+    base_path = "/usr/local/large_scale_hydro/Test/3"
+    # base_path = "/home/liujz/data/Large_Scale_Watershed/Test/1"
+    # 数据目录路径
+    catalog = '/usr/local/large_scale_hydro/catalog'
+    # catalog = '/home/liujz/data/Large_Scale_Watershed/catalog'
     # 范围数据(GeoJson)
     geojson_file_path = base_path + "/polygon.geojson"
     # 河流提取阈值
     extract_threshold = 20
     # 生成示例结果
-    demo4(base_path, dem_data_path, dir_data_path, acc_data_path, lake_data_path, geojson_file_path, extract_threshold)
+    demo5(base_path, catalog, geojson_file_path, extract_threshold)
     demo_end = time.perf_counter()
     print('Demo total time: ', demo_end - demo_start, 's')

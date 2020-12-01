@@ -13,7 +13,7 @@ import gdal
 
 
 # 示例：工作空间路径 DEM数据路径 流向数据路径 汇流累积量数据路径 湖泊/水库数据路径 GeoJson范围数据路径 河流提取阈值
-def demo2(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path, geojson_path, river_threshold):
+def demo4(workspace_path, dem_tif_path, dir_tif_path, acc_tif_path, water_tif_path, geojson_path, river_threshold):
 
     start = time.perf_counter()
 
@@ -146,6 +146,6 @@ if __name__ == '__main__':
     # 河流提取阈值
     extract_threshold = 20
     # 生成示例结果
-    demo2(base_path, dem_data_path, dir_data_path, acc_data_path, lake_data_path, geojson_file_path, extract_threshold)
+    demo4(base_path, dem_data_path, dir_data_path, acc_data_path, lake_data_path, geojson_file_path, extract_threshold)
     demo_end = time.perf_counter()
     print('Demo total time: ', demo_end - demo_start, 's')
