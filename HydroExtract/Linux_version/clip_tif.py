@@ -1,14 +1,8 @@
-import geopandas
 import os
 import json
 import rasterio
 from rasterio.mask import mask
-
-
-# shapefile转geojson: shapefile路径 geojson路径
-def shp_to_geojson(shp_path, geoj_path):
-    shp = geopandas.read_file(shp_path)
-    shp.to_file(geoj_path, driver="GeoJSON", encoding="utf-8")
+import common_utils as cu
 
 
 # geojson裁剪tif: geojson路径 tif路径 结果路径
@@ -34,7 +28,7 @@ def geojson_clip_tif(geojson_path, tif_path, result_path):
 def shp_clip_tif(shp_path, raster_path, result_path):
     temp_path = "temp.geojson"
 
-    shp_to_geojson(shp_path, temp_path)
+    cu.shp_to_geojson(shp_path, temp_path)
     geojson_clip_tif(temp_path, raster_path, result_path)
 
     os.remove(temp_path)
