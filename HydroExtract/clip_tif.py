@@ -11,7 +11,9 @@ def geojson_clip_tif(geojson_path, tif_path, result_path):
     with open(geojson_path) as f:
         geoj = json.load(f)
         raster = rasterio.open(tif_path)
-        geo = [geoj['features'][0]['geometry']]
+        geo = []
+        for feature in geoj['features']:
+            geo.append(feature['geometry'])
         out_image, out_transform = mask(raster, geo, all_touched=True, crop=True, nodata=raster.nodata)
         profile = raster.meta.copy()
         profile.update({
