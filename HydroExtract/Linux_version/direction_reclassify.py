@@ -4,10 +4,12 @@ import time
 import os
 
 
-# 流向数据重分类：原数据路径 重分类数据路径
-def dir_reclassify(old_tif_path, updated_tif_path):
+# 流向数据重分类：原数据路径 重分类数据路径 记录内流终点(可选)
+def dir_reclassify(old_tif_path, updated_tif_path, final_points_txt=None):
     update_value_2array = [1, 2, 4, 8, 16, 32, 64, 128]
     new_value_array = [1, 8, 7, 6, 5, 4, 3, 2]
+
+    final_value = -1
 
     old_ds = gdal.Open(old_tif_path)
 
@@ -23,6 +25,16 @@ def dir_reclassify(old_tif_path, updated_tif_path):
     copy_ds.SetProjection(old_ds.GetProjection())
     copy_ds.GetRasterBand(1).SetNoDataValue(no_data_value)
 
+    txt_flag = 0
+    final_f = None
+    if final_points_txt is not None:
+        print("Record Final Points.")
+        txt_flag = 1
+        if os.path.exists(final_points_txt):
+            os.remove(final_points_txt)
+    if txt_flag:
+        final_f = open(final_points_txt, "a")
+
     print("Direction Raster Classify...")
     for j in range(copy_ds.RasterYSize):
         for i in range(copy_ds.RasterXSize):
@@ -32,9 +44,19 @@ def dir_reclassify(old_tif_path, updated_tif_path):
                 new_value = new_value_array[index]
                 cu.set_raster_int_value(copy_ds, i, j, new_value)
             else:
-                cu.set_raster_int_value(copy_ds, i, j, no_data_value)
+                data_value = cu.get_raster_int_value(old_ds, i, j)
+                # 如果是内流点则随意赋值流向
+                if data_value == final_value and txt_flag:
+                    cu.set_raster_int_value(copy_ds, i, j, 1)
+                    # 记录内流区终点到txt
+                    final_record_item = [j, i]
+                    final_record_str = ','.join(str(k) for k in final_record_item)
+                    final_f.write(final_record_str + '\n')
+                else:
+                    cu.set_raster_int_value(copy_ds, i, j, no_data_value)
     old_ds = None
     copy_ds = None
+    final_f = None
 
 
 if __name__ == '__main__':
