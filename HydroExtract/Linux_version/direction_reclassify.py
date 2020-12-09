@@ -49,7 +49,7 @@ def dir_reclassify(old_tif_path, updated_tif_path, final_points_txt=None):
                 if data_value == final_value and txt_flag:
                     cu.set_raster_int_value(copy_ds, i, j, 1)
                     # 记录内流区终点到txt
-                    final_record_item = [j, i]
+                    final_record_item = [i, j]
                     final_record_str = ','.join(str(k) for k in final_record_item)
                     final_f.write(final_record_str + '\n')
                 else:
