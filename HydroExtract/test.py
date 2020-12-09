@@ -12,9 +12,9 @@ def test(work_path):
     # if not os.path.exists(result_path):
     #     os.makedirs(result_path)
 
-    geoj_path = work_path + "/json/138.geojson"
     shp_path = work_path + "/multi/138_auto.shp"
-    cu.geojson_to_shp(geoj_path, shp_path)
+    geoj_path = work_path + "/multi/138_auto.geojson"
+    cu.shp_to_geojson(shp_path, geoj_path)
 
     print("test")
 

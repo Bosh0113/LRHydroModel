@@ -21,21 +21,38 @@ def split_geojson(workspace, geojson_path):
                     new_jsons[dn] = [polygon_coord]
 
     for key, value in new_jsons.items():
-        new_json = {'type': "FeatureCollection", 'name': key, 'crs': {
-            'type': "name",
-            'properties': {
-                'name': "urn:ogc:def:crs:OGC:1.3:CRS84"
-            }
-        }, 'features': [{
-            'type': 'Feature',
-            'properties': {
-                "DN": int(key)
-            },
-            'geometry': {
-                'type': 'MultiPolygon',
-                'coordinates': value
-            }
-        }]}
+        if len(value) == 1:
+            new_json = {'type': "FeatureCollection", 'name': key, 'crs': {
+                'type': "name",
+                'properties': {
+                    'name': "urn:ogc:def:crs:OGC:1.3:CRS84"
+                }
+            }, 'features': [{
+                'type': 'Feature',
+                'properties': {
+                    "DN": int(key)
+                },
+                'geometry': {
+                    'type': 'Polygon',
+                    'coordinates': value[0]
+                }
+            }]}
+        else:
+            new_json = {'type': "FeatureCollection", 'name': key, 'crs': {
+                'type': "name",
+                'properties': {
+                    'name': "urn:ogc:def:crs:OGC:1.3:CRS84"
+                }
+            }, 'features': [{
+                'type': 'Feature',
+                'properties': {
+                    "DN": int(key)
+                },
+                'geometry': {
+                    'type': 'MultiPolygon',
+                    'coordinates': value
+                }
+            }]}
 
         new_json_path = workspace + "/" + key + ".geojson"
         f = open(new_json_path, 'w')

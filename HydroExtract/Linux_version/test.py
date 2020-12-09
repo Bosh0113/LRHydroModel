@@ -36,6 +36,13 @@ def test(work_path, filename):
                     input_array.append(tuple(point))
                 polygons_array.append(Polygon(input_array))
             polys = MultiPolygon(polygons_array)
+        elif features[0]['geometry']['type'] == 'Polygon':
+            polygon = features[0]['geometry']['coordinates']
+            points = polygon[0]
+            input_array = []
+            for point in points:
+                input_array.append(tuple(point))
+            polys = Polygon(input_array)
 
     print("Get DEM")
     tiled_raster_layer = gps.query(uri=catalog_path, layer_name="dem", layer_zoom=0, query_geom=polys)
