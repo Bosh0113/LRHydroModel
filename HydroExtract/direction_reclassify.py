@@ -47,7 +47,8 @@ def dir_reclassify(old_tif_path, updated_tif_path, final_points_txt=None):
                 data_value = cu.get_raster_int_value(old_ds, i, j)
                 # 如果是内流点则随意赋值流向
                 if data_value == final_value and txt_flag:
-                    cu.set_raster_int_value(copy_ds, i, j, 1)
+                    # 拟为内流终点赋值流向
+                    # cu.set_raster_int_value(copy_ds, i, j, 1)
                     # 记录内流区终点到txt
                     final_record_item = [i, j]
                     final_record_str = ','.join(str(k) for k in final_record_item)

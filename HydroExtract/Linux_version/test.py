@@ -18,22 +18,23 @@ def test(work_path, filename):
     if not os.path.exists(result_path):
         os.makedirs(result_path)
 
-    catalog_path = '/usr/local/large_scale_hydro/catalog'
+    # catalog_path = '/usr/local/large_scale_hydro/catalog'
+    catalog_path = '/home/liujz/data/Large_Scale_Watershed/catalog'
     json_path = work_path + '/' + filename + '.geojson'
     dem_tif_path = process_path + '/dem.tif'
     dir_tif_path = process_path + '/dir.tif'
     acc_tif_path = process_path + '/acc.tif'
     lake_tif_path = process_path + '/lake.tif'
 
-    ds.data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_path, lake_tif_path)
+    # ds.data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_path, lake_tif_path)
 
     print("Clip DEM/Dir/Acc")
-    dem_clip = result_path + "/dem_clip.tif"
+    dem_clip = process_path + "/dem_clip.tif"
     dir_clip = process_path + "/dir_clip.tif"
     acc_clip = process_path + "/acc_clip.tif"
-    ct.geojson_clip_tif(json_path, dem_tif_path, dem_clip)
-    ct.geojson_clip_tif(json_path, dir_tif_path, dir_clip)
-    ct.geojson_clip_tif(json_path, acc_tif_path, acc_clip)
+    # ct.geojson_clip_tif(json_path, dem_tif_path, dem_clip)
+    # ct.geojson_clip_tif(json_path, dir_tif_path, dir_clip)
+    # ct.geojson_clip_tif(json_path, acc_tif_path, acc_clip)
 
     print("Get Watershed...")
     dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
@@ -56,8 +57,9 @@ if __name__ == '__main__':
     # pysc = SparkContext(conf=conf)
 
     start = time.perf_counter()
-    workspace_path = "/usr/local/large_scale_hydro/Test/7"
-    files = ['Australia_test']
+    # workspace_path = "/usr/local/large_scale_hydro/Test/7"
+    workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/2"
+    files = ['Madagascar_test']
     for file in files:
         test(workspace_path, file)
     end = time.perf_counter()

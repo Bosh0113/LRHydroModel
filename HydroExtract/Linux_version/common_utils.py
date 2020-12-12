@@ -173,3 +173,10 @@ def shp_to_geojson(shp_path, geoj_path):
 def geojson_to_shp(geoj_path, shp_path):
     geoj = geopandas.read_file(geoj_path)
     geoj.to_file(shp_path, driver="ESRI Shapefile", encoding="utf-8")
+
+
+# 根据两点索引求流向值
+def dir_between_points(from_point, to_point):
+    for dir_value in range(1, 9, 1):
+        if get_to_point(from_point[0], from_point[1], dir_value) == to_point:
+            return dir_value

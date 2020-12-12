@@ -9,7 +9,7 @@ import shutil
 # 根据yamazaki的流向数据追踪内/外流流域: 工作空间路径(结果输出路径) DEM路径 流向路径 汇流累积量路径
 def get_drainage(workspace, dem_tif, dir_tif, acc_tif):
 
-    process_path = workspace_path + "/process"
+    process_path = workspace + "/process"
     if not os.path.exists(process_path):
         os.makedirs(process_path)
 
@@ -28,7 +28,7 @@ def get_drainage(workspace, dem_tif, dir_tif, acc_tif):
     print("-------------------------------------Get Watershed-----------------------------------")
     we.get_watershed(workspace, dem_tif, dir_reclass, acc_tif, trace_starts)
 
-    shutil.rmtree(process_path)
+    # shutil.rmtree(process_path)
 
 
 if __name__ == '__main__':
