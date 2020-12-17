@@ -3,7 +3,7 @@ import common_utils as cu
 
 
 # 将内流区域终点更新到河流数据: 终点索引参考的流向数据 记录终点索引的txt 需要更新的河系数据 汇流累积量数据 河系提取阈值
-def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th):
+def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th=None):
     dir_ds = gdal.Open(dir_tif, 1)
     rt_ds = gdal.Open(river_tif, 1)
     acc_ds = gdal.Open(acc_tif)
@@ -30,9 +30,11 @@ def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th):
                         min_acc = acc_value
                         min_acc_point = point
                 # 若最小累积量像元不成为河系
-                if min_acc < river_th:
+                if min_acc < river_th or river_th is None:
                     # 则赋值内流终点流向该方向
-                    dir_value = cu.dir_between_points([final_xoff, final_yoff], min_acc_point)
+                    dir_value = 1
+                    if river_th is not None:
+                        dir_value = cu.dir_between_points([final_xoff, final_yoff], min_acc_point)
                     cu.set_raster_int_value(dir_ds, final_xoff, final_yoff, dir_value)
                     # 记录Final point到河流
                     cu.set_raster_int_value(rt_ds, r_off[0], r_off[1], 1)
