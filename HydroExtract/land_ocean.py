@@ -17,7 +17,7 @@ def get_trace_points(dir_tif, flag_tif, trace_tif, seaside_txt=None, final_txt=N
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
     full_geotransform = dir_ds.GetGeoTransform()
-    trace_ds = driver.Create(trace_tif, dir_ds.RasterXSize, dir_ds.RasterYSize, 1, gdal.GDT_Int32)
+    trace_ds = driver.Create(trace_tif, dir_ds.RasterXSize, dir_ds.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
     trace_ds.SetGeoTransform(full_geotransform)
     trace_ds.SetProjection(dir_ds.GetProjection())
     trace_ds.GetRasterBand(1).SetNoDataValue(0)

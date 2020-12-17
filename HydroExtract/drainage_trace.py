@@ -20,7 +20,7 @@ def get_drainage(workspace, dem_tif, dir_tif, acc_tif):
     dr.dir_reclassify(dir_tif, dir_reclass, final_record)
 
     # 提取流域追踪起点
-    print("-------------------------------------Get Seaside-------------------------------------")
+    print("----------------------------------Get Trace Start------------------------------------")
     trace_starts = process_path + "/trace_starts.tif"
     lo.get_trace_points(dir_reclass, dir_tif, trace_starts)
 

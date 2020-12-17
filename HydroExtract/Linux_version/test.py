@@ -7,6 +7,7 @@ import clip_tif as ct
 import drainage_trace as dt
 import raster_polygonize as rp
 import split_subcatchments as ss
+import watershed_extract as we
 
 
 def test(work_path, filename):
@@ -19,25 +20,30 @@ def test(work_path, filename):
         os.makedirs(result_path)
 
     # catalog_path = '/usr/local/large_scale_hydro/catalog'
-    catalog_path = '/home/liujz/data/Large_Scale_Watershed/catalog'
-    json_path = work_path + '/' + filename + '.geojson'
-    dem_tif_path = process_path + '/dem.tif'
-    dir_tif_path = process_path + '/dir.tif'
-    acc_tif_path = process_path + '/acc.tif'
-    lake_tif_path = process_path + '/lake.tif'
+    # catalog_path = '/home/liujz/data/Large_Scale_Watershed/catalog'
+    # json_path = work_path + '/' + filename + '.geojson'
+    # dem_tif_path = process_path + '/dem.tif'
+    # dir_tif_path = process_path + '/dir.tif'
+    # acc_tif_path = process_path + '/acc.tif'
+    # lake_tif_path = process_path + '/lake.tif'
 
     # ds.data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_path, lake_tif_path)
 
-    print("Clip DEM/Dir/Acc")
-    dem_clip = process_path + "/dem_clip.tif"
-    dir_clip = process_path + "/dir_clip.tif"
-    acc_clip = process_path + "/acc_clip.tif"
+    # print("Clip DEM/Dir/Acc")
+    # dem_clip = process_path + "/dem_clip.tif"
+    # dir_clip = process_path + "/dir_clip.tif"
+    # acc_clip = process_path + "/acc_clip.tif"
     # ct.geojson_clip_tif(json_path, dem_tif_path, dem_clip)
     # ct.geojson_clip_tif(json_path, dir_tif_path, dir_clip)
     # ct.geojson_clip_tif(json_path, acc_tif_path, acc_clip)
 
+    dem_clip = work_path + "/dem.tif"
+    dir_clip = work_path + "/dir.tif"
+    acc_clip = work_path + "/acc.tif"
     print("Get Watershed...")
-    dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
+    # dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
+    we.get_watershed(process_path + "/process", dem_clip, process_path + "/process/dir_reclass.tif", acc_clip, process_path + "/process/trace_starts.tif")
+
 
     print("Get Watershed GeoJSON/SHP.")
     watershed_tif = process_path + "/watershed.tif"
@@ -46,8 +52,8 @@ def test(work_path, filename):
     rp.polygonize_to_geojson(watershed_tif, watershed_geoj)
     rp.polygonize_to_shp(watershed_tif, watershed_shp)
 
-    print("Split Basins.")
-    ss.split_geojson(result_path, watershed_geoj)
+    # print("Split Basins.")
+    # ss.split_geojson(result_path, watershed_geoj)
 
     print("test")
 
@@ -58,7 +64,8 @@ if __name__ == '__main__':
 
     start = time.perf_counter()
     # workspace_path = "/usr/local/large_scale_hydro/Test/7"
-    workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/2"
+    # workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/2"
+    workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/5/1"
     files = ['Madagascar_test']
     for file in files:
         test(workspace_path, file)

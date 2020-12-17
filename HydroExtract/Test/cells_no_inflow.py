@@ -11,7 +11,7 @@ def get_no_inflow_cells(dir_tif, no_inflow_tif):
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
     full_geotransform = dir_ds.GetGeoTransform()
-    ni_ds = driver.Create(no_inflow_tif, dir_ds.RasterXSize, dir_ds.RasterYSize, 1, gdal.GDT_Int32)
+    ni_ds = driver.Create(no_inflow_tif, dir_ds.RasterXSize, dir_ds.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
     ni_ds.SetGeoTransform(full_geotransform)
     ni_ds.SetProjection(dir_ds.GetProjection())
     ni_ds.GetRasterBand(1).SetNoDataValue(0)

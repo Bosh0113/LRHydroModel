@@ -359,14 +359,14 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
     result_data_path = work_path + "/water_slope_surface.tif"
-    dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int32)
+    dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_dir.GetProjection())
     dataset_ol.GetRasterBand(1).SetNoDataValue(no_data_value)
 
     # 创建坡面流路结果数据
     route_data_path = work_path + "/slope_surface_route.tif"
-    dataset_ro = driver.Create(route_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16)
+    dataset_ro = driver.Create(route_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
     dataset_ro.SetGeoTransform(full_geotransform)
     dataset_ro.SetProjection(dataset_dir.GetProjection())
     dataset_ro.GetRasterBand(1).SetNoDataValue(no_data_value)

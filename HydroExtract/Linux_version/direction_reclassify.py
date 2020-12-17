@@ -20,7 +20,7 @@ def dir_reclassify(old_tif_path, updated_tif_path, final_points_txt=None):
     full_geotransform = old_ds.GetGeoTransform()
     driver = gdal.GetDriverByName(file_format)
     result_data_path = updated_tif_path
-    copy_ds = driver.Create(result_data_path, old_ds.RasterXSize, old_ds.RasterYSize, 1, gdal.GDT_Int16)
+    copy_ds = driver.Create(result_data_path, old_ds.RasterXSize, old_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
     copy_ds.SetGeoTransform(full_geotransform)
     copy_ds.SetProjection(old_ds.GetProjection())
     copy_ds.GetRasterBand(1).SetNoDataValue(no_data_value)
