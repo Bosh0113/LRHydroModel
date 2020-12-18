@@ -41,8 +41,7 @@ def test(work_path, filename):
     dir_clip = work_path + "/dir.tif"
     acc_clip = work_path + "/acc.tif"
     print("Get Watershed...")
-    # dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
-    we.get_watershed(process_path + "/process", dem_clip, process_path + "/process/dir_reclass.tif", acc_clip, process_path + "/process/trace_starts.tif")
+    dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
 
 
     print("Get Watershed GeoJSON/SHP.")
