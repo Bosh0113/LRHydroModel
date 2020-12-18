@@ -1,5 +1,6 @@
 import os
 import geopandas as gpd
+import time
 
 
 # 矢量裁切矢量(shp): 被裁数据 范围数据
@@ -21,12 +22,13 @@ def filter_by_area(shp_path, res_path, area):
 def filter_lakes_extent_area(o_lake_shp, extent_shp, result_shp, area=0.1):
     o_rf = gpd.read_file(o_lake_shp)
     m_rf = gpd.read_file(extent_shp)
-    r_rf = gpd.clip(o_rf, m_rf)
-    result = r_rf[r_rf['Lake_area'].astype(float) > area]
+    r_rf = o_rf[o_rf['Lake_area'].astype(float) > area]
+    result = gpd.clip(r_rf, m_rf)
     result.to_file(result_shp)
 
 
 if __name__ == '__main__':
+    start = time.perf_counter()
     workspace = "D:/Graduation/Program/Data/31/3"
     # o_lake_data = workspace + "/HydroLAKES_checked.shp"
     # extent_data = workspace + "/full_extent.shp"
@@ -38,3 +40,5 @@ if __name__ == '__main__':
     result_data = result_path + "/lakes_filter.shp"
     area_th = 10
     filter_lakes_extent_area(o_lake_data, extent_data, result_data, area_th)
+    end = time.perf_counter()
+    print('Run', end - start, 's')
