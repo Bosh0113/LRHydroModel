@@ -30,7 +30,7 @@ def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th=N
                         min_acc = acc_value
                         min_acc_point = point
                 # 若最小累积量像元不成为河系
-                if min_acc < river_th or river_th is None:
+                if river_th is None or min_acc < river_th:
                     # 则赋值内流终点流向该方向
                     dir_value = 1
                     if river_th is not None:
@@ -41,23 +41,14 @@ def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th=N
 
 
 if __name__ == '__main__':
-    dir_file = "D:/Graduation/Program/Data/25/process/dir_reclass.tif"
-    txt_path = "D:/Graduation/Program/Data/25/process/final_record.txt"
+    workspace = "D:/Graduation/Program/Data/30/7/5"
 
-    river_file = "D:/Graduation/Program/Data/25/process/result/river_temp.tif"
-
-    dir_ds = gdal.Open(dir_file)
-    # 创建river临时数据
-    print("Create Trace file...")
-    file_format = "GTiff"
-    driver = gdal.GetDriverByName(file_format)
-    full_geotransform = dir_ds.GetGeoTransform()
-    trace_ds = driver.Create(river_file, dir_ds.RasterXSize, dir_ds.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
-    trace_ds.SetGeoTransform(full_geotransform)
-    trace_ds.SetProjection(dir_ds.GetProjection())
-    trace_ds.GetRasterBand(1).SetNoDataValue(0)
+    dir_file = workspace + "/dir_reclass.tif"
+    txt_path = workspace + "/final_record.txt"
+    river_file = workspace + "/boundary.tif"
+    acc_file = workspace + "/acc.tif"
 
     dir_ds = None
     trace_ds = None
 
-    add_final_to_river(dir_file, txt_path, river_file)
+    add_final_to_river(dir_file, txt_path, river_file, acc_file)

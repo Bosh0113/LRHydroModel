@@ -79,19 +79,45 @@ def get_8_dir(x, y):
             [x + 1, y + 1]]
 
 
-# 转换不同数据集的索引
-def off_transform(o_xoff, o_yoff, o_dataset, n_dataset):
+# 返回8个方向的坐标: 像元左上角x坐标 像元左上角y坐标 像元x距离 像元y距离
+def get_8_dir_coord(x, y, x_size, y_size):
+    return [[x - x_size, y - y_size],
+            [x, y - y_size],
+            [x + x_size, y - y_size],
+            [x - x_size, y],
+            [x + x_size, y],
+            [x - x_size, y + y_size],
+            [x, y + y_size],
+            [x + x_size, y + y_size]]
+
+
+# 根据数据集索引计算坐标: 原索引对 数据集 坐标对(返回)
+def off_to_coord(o_off, data_ds):
     # 获取数据集信息
-    o_geotransform = o_dataset.GetGeoTransform()
-    n_geotransform = n_dataset.GetGeoTransform()
+    o_geotransform = data_ds.GetGeoTransform()
 
     # 获取该点x,y坐标
-    x_coord = o_geotransform[0] + o_xoff * o_geotransform[1] + o_yoff * o_geotransform[2]
-    y_coord = o_geotransform[3] + o_xoff * o_geotransform[4] + o_yoff * o_geotransform[5]
+    x_coord = o_geotransform[0] + o_off[0] * o_geotransform[1] + o_off[1] * o_geotransform[2]
+    y_coord = o_geotransform[3] + o_off[0] * o_geotransform[4] + o_off[1] * o_geotransform[5]
+
+    return [x_coord, y_coord]
+
+
+# 根据坐标和数据集计算索引: 坐标对 数据集 索引对(返回)
+def coord_to_off(o_coord, data_ds):
+    # 获取数据集信息
+    n_geotransform = data_ds.GetGeoTransform()
     # 获取该点在river中的索引
-    n_xoff = int((x_coord - n_geotransform[0]) / n_geotransform[1] + 0.5)
-    n_yoff = int((y_coord - n_geotransform[3]) / n_geotransform[5] + 0.5)
+    n_xoff = int((o_coord[0] - n_geotransform[0]) / n_geotransform[1] + 0.5)
+    n_yoff = int((o_coord[1] - n_geotransform[3]) / n_geotransform[5] + 0.5)
     return [n_xoff, n_yoff]
+
+
+# 转换不同数据集的索引: 原x索引 原y索引 原数据集 新数据集 新数据索引(返回)
+def off_transform(o_xoff, o_yoff, o_dataset, n_dataset):
+    n_coord = off_to_coord([o_xoff, o_yoff], o_dataset)
+    n_off = coord_to_off(n_coord, n_dataset)
+    return n_off
 
 
 # 复制tif数据到新路径

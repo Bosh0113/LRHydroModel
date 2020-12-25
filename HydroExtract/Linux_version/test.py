@@ -37,11 +37,16 @@ def test(work_path, filename):
     # ct.geojson_clip_tif(json_path, dir_tif_path, dir_clip)
     # ct.geojson_clip_tif(json_path, acc_tif_path, acc_clip)
 
-    dem_clip = work_path + "/dem.tif"
-    dir_clip = work_path + "/dir.tif"
-    acc_clip = work_path + "/acc.tif"
+    # dem_clip = work_path + "/dem.tif"
+    # dir_clip = work_path + "/dir.tif"
+    # acc_clip = work_path + "/acc.tif"
+    dem = work_path + "/dem.tif"
+    dir = work_path + "/dir_reclass.tif"
+    acc = work_path + "/acc.tif"
+    bound = work_path + "/boundary.tif"
     print("Get Watershed...")
-    dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
+    # dt.get_drainage(process_path, dem_clip, dir_clip, acc_clip)
+    we.get_watershed(process_path, dem, dir, acc, bound)
 
 
     print("Get Watershed GeoJSON/SHP.")
@@ -64,7 +69,7 @@ if __name__ == '__main__':
     start = time.perf_counter()
     # workspace_path = "/usr/local/large_scale_hydro/Test/7"
     # workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/2"
-    workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/5/1"
+    workspace_path = "/home/liujz/data/Large_Scale_Watershed/Test/5/2"
     files = ['Madagascar_test']
     for file in files:
         test(workspace_path, file)

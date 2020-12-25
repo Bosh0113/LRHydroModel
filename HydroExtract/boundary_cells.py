@@ -11,7 +11,7 @@ def get_data_boundary_cells(data_tif, boundary_tif):
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
     full_geotransform = data_ds.GetGeoTransform()
-    b_ds = driver.Create(boundary_tif, data_ds.RasterXSize, data_ds.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
+    b_ds = driver.Create(boundary_tif, data_ds.RasterXSize, data_ds.RasterYSize, 1, gdal.GDT_Byte, options=['COMPRESS=DEFLATE'])
     b_ds.SetGeoTransform(full_geotransform)
     b_ds.SetProjection(data_ds.GetProjection())
     b_ds.GetRasterBand(1).SetNoDataValue(0)
@@ -56,7 +56,7 @@ def get_data_boundary_cells(data_tif, boundary_tif):
 
 
 if __name__ == '__main__':
-    workspace = "D:/Graduation/Program/Data/30/2"
+    workspace = "D:/Graduation/Program/Data/30/7/5"
     data = workspace + "/dir_reclass.tif"
     boundary_data = workspace + "/boundary.tif"
     get_data_boundary_cells(data, boundary_data)
