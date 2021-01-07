@@ -3,7 +3,7 @@ import os
 
 # 合并tif数据: 合并后的tif路径 需要合并的文件所在文件夹路径 需要合并的tif名称关键字数组
 def merge_tif(merged_tif, folder, filenames):
-    command = 'gdal_merge.py -o ' + merged_tif + ' -co COMPRESS=DEFLATE -of GTiff'
+    command = 'gdal_merge.py -o ' + merged_tif + ' -co COMPRESS=DEFLATE -co BIGTIFF=YES -of GTiff'
     for root, dirs, files in os.walk(folder):
         for file in files:
             for filename in filenames:

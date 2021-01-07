@@ -209,7 +209,7 @@ def update_acc_nodata(acc_index, dir_index, x_size, y_size, temp_nodata, nc_p=0)
     while update_flag:
         # 重置更新标识
         update_flag = 0
-        print("change flag")
+        print("Changed Flag")
         # 获得要遍历的有效边界nodata数组
         t_b_nodata = o_b_nodata[:]
         # 遍历有效边界nodata数组
