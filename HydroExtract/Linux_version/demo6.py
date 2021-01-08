@@ -1,3 +1,4 @@
+# coding=utf-8
 import direction_reclassify as dc
 import get_dir_acc as gda
 import river_extract as re

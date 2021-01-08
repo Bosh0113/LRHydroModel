@@ -1,3 +1,4 @@
+# coding=utf-8
 import gdal
 import ogr
 import osr

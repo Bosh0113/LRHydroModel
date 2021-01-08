@@ -1,3 +1,4 @@
+# coding=utf-8
 import direction_reclassify as dc
 import river_extract as re
 import watershed_extract as we

@@ -1,3 +1,4 @@
+# coding=utf-8
 import get_dir_acc as gda
 import river_extract as re
 import watershed_extract as we

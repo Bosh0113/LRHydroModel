@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 import time
 import taudem_utils as tu

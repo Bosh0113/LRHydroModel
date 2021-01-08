@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 import time
 # import direction_reclassify as dr
@@ -18,7 +19,8 @@ def get_drainage(workspace, dem_tif, dir_tif, acc_tif):
     # 流向数据重分类
     print("--------------------------------Reclassify Direction--------------------------------")
     dir_reclass = process_path + "/dir_reclass.tif"
-    reclass_table = "/share/home/liujunzhi/liujunzhi/large_basins/4/program/dir_reclass_table.txt"
+    current_path = os.path.abspath(os.path.dirname(__file__))
+    reclass_table = current_path + "/dir_reclass_table.txt"
     drs.reclassify_dir(dir_tif, dir_reclass, reclass_table)
 
     # 提取流域追踪起点

@@ -1,3 +1,4 @@
+# coding=utf-8
 import common_utils as cu
 import gdal
 import os

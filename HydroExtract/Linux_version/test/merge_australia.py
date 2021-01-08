@@ -1,3 +1,4 @@
+# coding=utf-8
 import merge_tif as mt
 
 

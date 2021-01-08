@@ -1,3 +1,4 @@
+# coding=utf-8
 import geopyspark as gps
 import json
 from pyspark import SparkContext
