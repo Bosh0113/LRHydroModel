@@ -335,7 +335,7 @@ def clear_buffer(water_buf):
             cu.set_raster_int_value(dataset_ol, cell[0], cell[1], no_data_value)
 
 
-# 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据
+# 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据 河系提取阈值 结果数据nodata（可选）
 def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_threshold, no_data=None):
     print("Extract Start")
     global dataset_res, dataset_dir, dataset_acc, dataset_ol, dataset_ro, river_th, water_ol_bufs, no_data_value

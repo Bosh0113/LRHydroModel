@@ -13,6 +13,7 @@ def d8_flow_directions(dem_tif_path, dir_tif_path, slope_output_path):
     # cmd语句调用TauDEM的D8 Flow Directions程序
     dir_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/d8flowdir -fel ' + dem_tif_path + ' -p ' + \
               dir_tif_path + ' -sd8 ' + slope_output_path
+    print(dir_cmd)
     d = os.system(dir_cmd)
     print(d)
 
@@ -27,6 +28,7 @@ def d8_contributing_area(dir_tif_path, contributing_area_path, nc=0):
     else:
         con_cmd = 'mpiexec -np ' + str(4) + ' ' + taudem_path + '/aread8 -p ' + dir_tif_path + ' -ad8 ' + \
                   contributing_area_path
+    print(con_cmd)
     d = os.system(con_cmd)
     print(d)
 
@@ -37,6 +39,7 @@ def grid_network(dir_tif_path, longest_upstream_path, total_upstream_path, str_o
     # cmd语句调用TauDEM的Stream Definition By Threshold程序
     acc_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/gridnet -p ' + dir_tif_path + ' -plen ' + \
               longest_upstream_path + ' -tlen ' + total_upstream_path + ' -gord ' + str_order_acc_path
+    print(acc_cmd)
     d = os.system(acc_cmd)
     print(d)
 
@@ -47,6 +50,7 @@ def stream_definition_by_threshold(total_upstream_path, str_tif_path, extract_th
     # cmd语句调用TauDEM的Stream Definition By Threshold程序
     str_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/threshold -ssa ' + total_upstream_path + \
               ' -src ' + str_tif_path + ' -thresh ' + extract_threshold
+    print(str_cmd)
     d = os.system(str_cmd)
     print(d)
 
@@ -61,5 +65,6 @@ def stream_reach_and_watershed(dem_tif_path, dir_tif_path, contributing_area_pat
              dir_tif_path + ' -ad8 ' + contributing_area_path + ' -src ' + str_tif_path + ' -ord ' + \
              str_order_path + ' -tree ' + str_tree_txt_path + ' -coord ' + str_coord_txt_path + ' -net ' + \
              str_shp_path + ' -w ' + ws_tif_path
+    print(ws_cmd)
     d = os.system(ws_cmd)
     print(d)
