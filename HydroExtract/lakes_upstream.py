@@ -30,7 +30,7 @@ def get_lake_upstream(shp_lake, dem_tif, dir_tif, acc_tif, temp_folder, basin_de
     cts.shp_clip_tif(wss_shp, dem_tif, basin_dem)
     # 得到上游区域提取的tif
     upstream_tif = temp_folder + '/upstream.tif'
-    cmd = saga_cmd + " grid_tools 15 -INPUT "+ wss_tif + " -RESULT " + upstream_tif + " -METHOD 0 -OLD -99 -NEW -9 -RESULT_NODATA_VALUE -9"
+    cmd = saga_cmd + " grid_tools 15 -INPUT " + wss_tif + " -RESULT " + upstream_tif + " -METHOD 0 -OLD -99 -NEW -9 -RESULT_NODATA_VALUE -9"
     print(cmd)
     d = os.system(cmd)
     print(d)
