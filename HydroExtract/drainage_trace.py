@@ -26,8 +26,9 @@ def get_drainage(workspace, dem_tif, dir_tif, acc_tif):
     # 提取流域追踪起点
     print("----------------------------------Get Trace Start------------------------------------")
     trace_starts = process_path + "/trace_starts.tif"
+    seaside_record = process_path + "/seaside_record.txt"
     final_record = process_path + "/final_record.txt"
-    lo.get_trace_points(dir_reclass, dir_tif, trace_starts, final_txt=final_record)
+    lo.get_trace_points(dir_reclass, dir_tif, trace_starts, seaside_txt=seaside_record, final_txt=final_record)
     raf.add_final_to_river(dir_reclass, final_record, trace_starts, acc_tif)
 
     # 提取子流域

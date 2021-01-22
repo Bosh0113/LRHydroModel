@@ -15,8 +15,11 @@ def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th=N
             final_info_str = line.strip('\n')
             final_info = final_info_str.split(',')
             # 将final像元的x,y索引
-            final_xoff = int(final_info[0])
-            final_yoff = int(final_info[1])
+            f_x_coord = float(final_info[0])
+            f_y_coord = float(final_info[1])
+            final_off = cu.coord_to_off([f_x_coord, f_y_coord], rt_ds)
+            final_xoff = final_off[0]
+            final_yoff = final_off[1]
             # 得到在河流中对应的索引
             r_off = cu.off_transform(final_xoff, final_yoff, dir_ds, rt_ds)
             # 若在数据内
@@ -42,12 +45,12 @@ def add_final_to_river(dir_tif, final_points_txt, river_tif, acc_tif, river_th=N
 
 
 if __name__ == '__main__':
-    workspace = "D:/Graduation/Program/Data/30/7/5"
+    workspace = "G:/Graduation/Program/Data/25"
 
-    dir_file = workspace + "/dir_reclass.tif"
-    txt_path = workspace + "/final_record.txt"
-    river_file = workspace + "/boundary.tif"
-    acc_file = workspace + "/acc.tif"
+    dir_file = workspace + "/endorheic/dir_reclass.tif"
+    txt_path = workspace + "/endorheic/final.txt"
+    river_file = workspace + "/endorheic/final.tif"
+    acc_file = workspace + "/preprocess/acc_i.tif"
 
     dir_ds = None
     trace_ds = None

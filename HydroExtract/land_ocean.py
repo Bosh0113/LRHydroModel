@@ -70,7 +70,8 @@ def get_trace_points(dir_tif, flag_tif, trace_tif, seaside_txt=None, final_txt=N
                             cu.set_raster_int_value(trace_ds, n_cell[0], n_cell[1], 1)
                             # 记录到文件
                             if seaside_flag:
-                                seaside_record_item = [j, i]
+                                # 获得栅格像元左上角坐标
+                                seaside_record_item = cu.off_to_coord([j, i], f_ds)
                                 seaside_record_str = ','.join(str(k) for k in seaside_record_item)
                                 seaside_f.write(seaside_record_str + '\n')
             # 如果是final point
@@ -79,7 +80,7 @@ def get_trace_points(dir_tif, flag_tif, trace_tif, seaside_txt=None, final_txt=N
                 cu.set_raster_int_value(trace_ds, j, i, 1)
                 # 记录到文件
                 if final_flag:
-                    final_record_item = [j, i]
+                    final_record_item = cu.off_to_coord([j, i], f_ds)
                     final_record_str = ','.join(str(k) for k in final_record_item)
                     final_f.write(final_record_str + '\n')
     dir_ds = None
@@ -90,10 +91,10 @@ def get_trace_points(dir_tif, flag_tif, trace_tif, seaside_txt=None, final_txt=N
 
 
 if __name__ == '__main__':
-    workspace = "D:/Graduation/Program/Data/25"
-    dir_data = workspace + "/process/dir_reclass.tif"
-    coastline_data = workspace + "/preprocess/dir_i.tif"
-    trace_path = workspace + "/process/trace.tif"
-    seaside_record = workspace + "/process/seaside.txt"
-    final_record = workspace + "/process/final.txt"
+    workspace = "G:/Graduation/Program/Data/25"
+    dir_data = workspace + "/external/dir_reclass.tif"
+    coastline_data = workspace + "/preprocess/dir_e.tif"
+    trace_path = workspace + "/external/trace.tif"
+    seaside_record = workspace + "/external/seaside.txt"
+    final_record = workspace + "/external/final.txt"
     get_trace_points(dir_data, coastline_data, trace_path, seaside_record, final_record)

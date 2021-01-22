@@ -20,7 +20,7 @@ def get_lake_upstream(shp_lake, dem_tif, dir_tif, acc_tif, temp_folder, basin_de
     # 获取湖泊栅格文件（最小范围）
     vr.lake_rasterize(shp_lake, dem_tif_path, lake_tif_path, -99, -9, 1)
     # 获取上游及湖体范围
-    sse.get_slope_surface(temp_folder, lake_tif_path, dir_tif_path, acc_tif_path, 500000)
+    sse.get_slope_surface(temp_folder, lake_tif_path, dir_tif_path, acc_tif_path, float('inf'))
     # 上游及湖体范围矢量化
     wss_tif = temp_folder + '/water_slope_surface.tif'
     wss_shp = basin_dems_folder + '/' + lake_index + '_wss.shp'
@@ -60,9 +60,17 @@ if __name__ == '__main__':
 
     result_path = workspace + '/result'
     tif_lakes_path = result_path + "/lake_tifs"
+    if not os.path.exists(tif_lakes_path):
+        os.makedirs(tif_lakes_path)
     tif_basins_path = result_path + "/basin_dems"
+    if not os.path.exists(tif_basins_path):
+        os.makedirs(tif_basins_path)
     tif_up_data_path = result_path + '/upstream_data'
+    if not os.path.exists(tif_up_data_path):
+        os.makedirs(tif_up_data_path)
     lake_shp_n_path = result_path + '/lake_shps'
+    if not os.path.exists(lake_shp_n_path):
+        os.makedirs(lake_shp_n_path)
 
     lake_index = 0
     lake_shps = os.listdir(shp_lakes_path)

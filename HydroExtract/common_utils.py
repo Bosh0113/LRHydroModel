@@ -1,7 +1,7 @@
 # coding=utf-8
 import struct
-import gdal
 import geopandas
+import gdal
 
 
 # 获取栅格数据值(signed int)：数据集 x索引 y索引
