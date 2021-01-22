@@ -46,23 +46,46 @@ def in_data(x, y, x_size, y_size):
     return True
 
 
-# 根据流向得到指向的栅格索引
-def get_to_point(x, y, dir):
-    if dir == 1:
+# 根据流向得到指向的栅格索引(8制)
+def get_to_point(x, y, dir_8):
+    if dir_8 == 1:
         return [x + 1, y]
-    elif dir == 8:
+    elif dir_8 == 8:
         return [x + 1, y + 1]
-    elif dir == 7:
+    elif dir_8 == 7:
         return [x, y + 1]
-    elif dir == 6:
+    elif dir_8 == 6:
         return [x - 1, y + 1]
-    elif dir == 5:
+    elif dir_8 == 5:
         return [x - 1, y]
-    elif dir == 4:
+    elif dir_8 == 4:
         return [x - 1, y - 1]
-    elif dir == 3:
+    elif dir_8 == 3:
         return [x, y - 1]
-    elif dir == 2:
+    elif dir_8 == 2:
+        return [x + 1, y - 1]
+    else:
+        return []
+
+
+# 根据流向得到指向的栅格索引(128制)
+def get_to_point_128(x, y, dir_128):
+    dir_128 = abs(dir_128)
+    if dir_128 == 1:
+        return [x + 1, y]
+    elif dir_128 == 2:
+        return [x + 1, y + 1]
+    elif dir_128 == 4:
+        return [x, y + 1]
+    elif dir_128 == 8:
+        return [x - 1, y + 1]
+    elif dir_128 == 16:
+        return [x - 1, y]
+    elif dir_128 == 32:
+        return [x - 1, y - 1]
+    elif dir_128 == 64:
+        return [x, y - 1]
+    elif dir_128 == 128:
         return [x + 1, y - 1]
     else:
         return []

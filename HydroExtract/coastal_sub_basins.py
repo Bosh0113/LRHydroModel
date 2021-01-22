@@ -3,6 +3,7 @@ import time
 import common_utils as cu
 import json
 import gdal
+import heapq
 
 
 # 从GeoJSON数据中获取多边形点集: GeoJSON路径
@@ -174,7 +175,7 @@ def outlets_index_order(boundary_array, outlet_ds):
     outlet_order = []
     # 得到流域集合边界上出口栅格和其在多边形内边界上的追踪序号
     # 初始化记录出口点及其与前者出口点在追踪给数组中相差距离的数组
-    record_distance = []
+    record_distance = {}
     # 初始化记录与前者出口点在追踪给数组中相差距离
     distance = 0
     for index in boundary_array:
@@ -183,36 +184,103 @@ def outlets_index_order(boundary_array, outlet_ds):
         trace_value = cu.get_raster_int_value(outlet_ds, index[0], index[1])
         # 若为出口点则记录
         if trace_value > 0:
-            record_distance.append([index, distance])
+            key = ','.join(str(k) for k in index)
+            record_distance[key] = distance
             distance = 0
     # 更新第一个记录的点与前者间的距离
-    record_distance[0][1] = record_distance[0][1] + distance
+    key_f = [key for key in record_distance.keys()][0]
+    value_f = [value for value in record_distance.values()][0]
+    record_distance[key_f] = value_f + distance
 
     # 根据得到的序号得到流域出口的最佳排序
     # 与前者距离最大的值
     max_distance_index = 0
     # 与前者距离最大的出口点在出口数组中的索引
     max_dis_index_mark = 0
-    for i in range(len(record_distance)):
-        distance = record_distance[i][1]
+    # 得到距离数组
+    distance_array = [value for value in record_distance.values()]
+    for i in range(len(distance_array)):
+        distance = distance_array[i]
         if distance > max_distance_index:
             max_distance_index = distance
             max_dis_index_mark = i
 
+    # 出口点集
+    outlet_set = []
+    point_off_str = [key for key in record_distance.keys()]
+    for point_str in point_off_str:
+        point_temp = point_str.split(',')
+        point = [int(point_temp[0]), int(point_temp[1])]
+        outlet_set.append(point)
     # 以标记的位置为起点记录出口点
-    for i in range(max_dis_index_mark, len(record_distance)):
-        outlet_order.append(record_distance[i][0])
+    for i in range(max_dis_index_mark, len(outlet_set)):
+        outlet_order.append(outlet_set[i])
     for i in range(0, max_dis_index_mark):
-        outlet_order.append(record_distance[i][0])
+        outlet_order.append(outlet_set[i])
 
     return outlet_order
 
 
-# 对沿海流域集合进行次级流域分组
-def basin_divide(work_space, boundary_geoj, trace_tif):
+# 以四个大流域为界将流域出口分组: 排好序的流域出水口集合 汇流累积量数据DataSet 分组后的出水口集合(返回)
+def divide_outlet_to_group(outlets_order, acc_ds):
+    acc_array = []
+    for outlet in outlets_order:
+        acc_value = cu.get_raster_float_value(acc_ds, outlet[0], outlet[1])
+        acc_array.append(acc_value)
+    # 得到最大4个acc值所对应的数组索引
+    max_4_index = list(map(acc_array.index, heapq.nlargest(4, acc_array)))
+    # 对4大acc对应索引从小到大排序
+    max_4_index.sort()
+    # 根据四大流域对夹杂的中间子流域分组
+    odd_1 = outlets_order[0:max_4_index[0]]
+    even_2 = [outlets_order[max_4_index[0]]]
+    odd_3 = outlets_order[max_4_index[0] + 1:max_4_index[1]]
+    even_4 = [outlets_order[max_4_index[1]]]
+    odd_5 = outlets_order[max_4_index[1] + 1:max_4_index[2]]
+    even_6 = [outlets_order[max_4_index[2]]]
+    odd_7 = outlets_order[max_4_index[2] + 1:max_4_index[3]]
+    even_8 = [outlets_order[max_4_index[3]]]
+    odd_9 = outlets_order[max_4_index[3] + 1:]
+    return [odd_1, even_2, odd_3, even_4, odd_5, even_6, odd_7, even_8, odd_9]
+
+
+# 根据流域出水口追踪子流域: 出水口索引 结果数据DataSet 流域编号 流向数据DataSet
+def outlet_basins(outlet, result_ds, s_id, dir_ds):
+    # 创建追踪数组
+    trace_array = [outlet]
+    # 若需要继续追踪
+    while len(trace_array) > 0:
+        # 取出当前像元
+        cur_cell = trace_array.pop()
+        cur_x = cur_cell[0]
+        cur_y = cur_cell[1]
+        # 对当前像元赋值
+        cu.set_raster_int_value(result_ds, cur_x, cur_y, s_id)
+        # 获取周边像元索引
+        n_8_cells = cu.get_8_dir(cur_x, cur_y)
+        # 遍历8个像元
+        for n_cell in n_8_cells:
+            n_x = n_cell[0]
+            n_y = n_cell[1]
+            # 若在数据范围内
+            if cu.in_data(n_x, n_y, dir_ds.RasterXSize, dir_ds.RasterYSize):
+                # 获得当前点流向值
+                dir_value = cu.get_raster_int_value(dir_ds, n_x, n_y)
+                # 获得下游点索引
+                to_point = cu.get_to_point_128(n_x, n_y, dir_value)
+                # 若为当前点的上游点
+                if to_point == cur_cell:
+                    # 将此像元加入到流域追踪数组
+                    trace_array.append(n_cell)
+
+
+# 对沿海流域集合进行次级流域分组: 次级流域划分结果路径 原流域边界GeoJSON 流域集的出水口数据路径 汇流累积量数据路径 流向数据路径
+def basin_divide(sub_basins_tif, boundary_geoj, trace_tif, acc_tif, dir_tif):
     polygons_points = get_polygon_points(boundary_geoj)
     if len(polygons_points) == 1:
         trace_ds = gdal.Open(trace_tif)
+        acc_ds = gdal.Open(acc_tif)
+        dir_ds = gdal.Open(dir_tif)
         polygon_pts = polygons_points[0]
 
         p_clockwise = is_clockwise(polygon_pts)
@@ -228,28 +296,28 @@ def basin_divide(work_space, boundary_geoj, trace_tif):
             inner_ras_indexes = inner_boundary_raster_indexes(polygon_ras_indexes)
             # 得到流域集合边界上出口栅格顺时针编号
             outlets_order = outlets_index_order(inner_ras_indexes, trace_ds)
+            # 以四个大流域为界将流域出口分组
+            outlet_groups = divide_outlet_to_group(outlets_order, acc_ds)
 
-            print("---------------------------------------")
-            for point in outlets_order:
-                print(point)
+            file_format = "GTiff"
+            driver = gdal.GetDriverByName(file_format)
+            sub_ds = driver.Create(sub_basins_tif, trace_ds.RasterXSize, trace_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
+            sub_ds.SetGeoTransform(trace_ds.GetGeoTransform())
+            sub_ds.SetProjection(trace_ds.GetProjection())
+            sub_ds.GetRasterBand(1).SetNoDataValue(-1)
 
-            # file_format = "GTiff"
-            # driver = gdal.GetDriverByName(file_format)
-            # temp_path = work_space + "/temp2.tif"
-            # temp_ds = driver.Create(temp_path, trace_ds.RasterXSize, trace_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
-            # temp_ds.SetGeoTransform(trace_ds.GetGeoTransform())
-            # temp_ds.SetProjection(trace_ds.GetProjection())
-            # temp_ds.GetRasterBand(1).SetNoDataValue(-1)
-            #
-            # for i in range(len(outlets_order)):
-            #     xy_off = outlets_order[i]
-            #     x_off = xy_off[0]
-            #     y_off = xy_off[1]
-            #     if cu.in_data(x_off, y_off, temp_ds.RasterXSize, temp_ds.RasterYSize):
-            #         cu.set_raster_int_value(temp_ds, x_off, y_off, i)
+            for i in range(len(outlet_groups)):
+                outlet_group = outlet_groups[i]
+                for outlet in outlet_group:
+                    x_off = outlet[0]
+                    y_off = outlet[1]
+                    if cu.in_data(x_off, y_off, sub_ds.RasterXSize, sub_ds.RasterYSize):
+                        outlet_basins(outlet, sub_ds, i + 1, dir_ds)
 
         trace_ds = None
-        temp_ds = None
+        sub_ds = None
+        acc_ds = None
+        dir_ds = None
     else:
         print('error!')
 
@@ -258,10 +326,13 @@ if __name__ == '__main__':
     start = time.perf_counter()
     workspace = r"G:\Graduation\Program\Data\40\order_outlet"
     # boundary_shp = workspace + '/data/test_boundary.shp'
-    boundary_geoj = workspace + '/data/test_boundary.geojson'
+    boundary_geoj_path = workspace + '/data/test_boundary.geojson'
     # cu.shp_to_geojson(boundary_shp, boundary_geoj)
 
     outlet_path = workspace + "/data/trace.tif"
-    basin_divide(workspace, boundary_geoj, outlet_path)
+    acc_path = workspace + "/data/acc_e.tif"
+    dir_path = workspace + "/data/dir_128.tif"
+    sub_basins_path = workspace + "/sub_basins.tif"
+    basin_divide(sub_basins_path, boundary_geoj_path, outlet_path, acc_path, dir_path)
     end = time.perf_counter()
     print('Run', end - start, 's')
