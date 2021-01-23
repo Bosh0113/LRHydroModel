@@ -4,6 +4,7 @@ import sub_basins_utils as sbu
 import common_utils as cu
 import gdal
 import heapq
+import temp2 as t2
 
 
 # 根据连续三个像元的索引判断溢出方向: 第一个点索引 第二个点索引 第三个点索引 溢出方向(返回)
@@ -104,39 +105,41 @@ def spill_point_dir(inner_ras_indexes, dem_ds):
 def basin_spill(boundary_geoj, dem_tif):
     polygons_points = sbu.get_polygon_points(boundary_geoj)
     if len(polygons_points) == 1:
-        dem_ds = gdal.Open(dem_tif)
         polygon_pts = polygons_points[0]
-        p_clockwise = sbu.is_clockwise(polygon_pts)
-        # 边界为顺时针多边形
-        if p_clockwise:
-            # 获取多边形顶点在栅格数据中的索引
-            p_offs = []
-            for point in polygon_pts:
-                p_offs.append(cu.coord_to_off(point, dem_ds))
-            # 获取多边形其边对应的所有栅格索引的集合
-            polygon_ras_indexes = sbu.raster_index_on_polygon(p_offs)
-            # 得到多边形边界内部邻接栅格像元的索引
-            inner_ras_indexes = sbu.inner_boundary_raster_indexes(polygon_ras_indexes)
-            # 得到流域内边界最低点及出流方向
-            spill_point, spill_dir, reception_pt = spill_point_dir(inner_ras_indexes, dem_ds)
-            # 得到接受点的坐标
-            reception_pt_coord = cu.off_to_coord(reception_pt, dem_ds)
-            return spill_point, spill_dir, reception_pt_coord
-        else:
-            print('No support anticlockwise!')
-        dem_ds = None
     else:
-        print('error!')
+        polygon_pts = sbu.update_boundary_polygon(polygons_points)
+    dem_ds = gdal.Open(dem_tif)
+
+    p_clockwise = sbu.is_clockwise(polygon_pts)
+    # 边界为顺时针多边形
+    if p_clockwise:
+        # 获取多边形顶点在栅格数据中的索引
+        p_offs = []
+        for point in polygon_pts:
+            p_offs.append(cu.coord_to_off(point, dem_ds))
+        # 获取多边形其边对应的所有栅格索引的集合
+        polygon_ras_indexes = sbu.raster_index_on_polygon(p_offs)
+        # 得到多边形边界内部邻接栅格像元的索引
+        inner_ras_indexes = sbu.inner_boundary_raster_indexes(polygon_ras_indexes)
+
+        # 得到流域内边界最低点及出流方向
+        spill_point, spill_dir, reception_pt = spill_point_dir(inner_ras_indexes, dem_ds)
+        # 得到接受点的坐标
+        reception_pt_coord = cu.off_to_coord(reception_pt, dem_ds)
+        return spill_point, spill_dir, reception_pt_coord
+    else:
+        print('No support anticlockwise!')
+    dem_ds = None
+
     return [], 0, []
 
 
 if __name__ == '__main__':
     start = time.perf_counter()
 
-    workspace = r'G:\Graduation\Program\Data\41\endorheic_area0'
-    boundary_geoj_path = workspace + '/data/demo_boundary.geojson'
-    acc_tif_path = workspace + ''
-    dem_tif_path = workspace + '/data/demo_dem.tif'
+    workspace = r'G:\Graduation\Program\Data\41\endorheic_area0\test4'
+    boundary_geoj_path = workspace + '/data/basin4.geojson'
+    dem_tif_path = workspace + '/data/dem4.tif'
     s_pt, s_dir, reception_coord = basin_spill(boundary_geoj_path, dem_tif_path)
     if len(s_pt) > 0:
         print('raster index: ', s_pt, ' direction: ', s_dir, 'next point location: ', reception_coord)

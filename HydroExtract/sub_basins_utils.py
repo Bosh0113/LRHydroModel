@@ -15,18 +15,45 @@ def get_polygon_points(geojson_path):
         if FeatureObj['geometry']['type'] == 'MultiPolygon':
             polygons = FeatureObj['geometry']['coordinates']
             for polygon in polygons:
-                polygon_points = []
-                for point in polygon[0]:
-                    polygon_points.append(point)
-                polygons_array.append(polygon_points)
+                for polygon_item in polygon:
+                    polygon_points = []
+                    for point in polygon_item:
+                        polygon_points.append(point)
+                    polygons_array.append(polygon_points)
         elif FeatureObj['geometry']['type'] == 'Polygon':
             polygon = FeatureObj['geometry']['coordinates']
-            points = polygon[0]
-            polygon_points = []
-            for point in points:
-                polygon_points.append(point)
-            polygons_array.append(polygon_points)
+            for polygon_item in polygon:
+                polygon_points = []
+                for point in polygon_item:
+                    polygon_points.append(point)
+                polygons_array.append(polygon_points)
     return polygons_array
+
+
+# 更新流域边界表达: 多边形数组(含岛) 更新后的多边形(返回，合并邻接岛的外边界)
+def update_boundary_polygon(polygon_array):
+    old_boundary = polygon_array[0]
+    new_boundary = old_boundary[:]
+    for index in range(1, len(polygon_array)):
+        polygon_item = polygon_array[index][:]
+        # 判断岛是否与外边界相邻
+        on_point = []
+        on_flag = 0
+        for point in polygon_item:
+            if point in new_boundary:
+                on_flag = 1
+                on_point = point[:]
+        if on_flag:
+            print(len(new_boundary))
+            on_index = new_boundary.index(on_point)
+            # 貌似只存在一种情况
+            polygon_item.remove(on_point)
+            polygon_item.reverse()
+            for item in polygon_item:
+                new_boundary.insert(on_index + 1, item)
+            print(len(new_boundary))
+
+    return new_boundary
 
 
 # 判断点集顺序(Green方法): 点集 判断结果(返回，-1逆时针/1顺时针)
