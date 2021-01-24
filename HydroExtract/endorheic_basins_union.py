@@ -4,7 +4,6 @@ import sub_basins_utils as sbu
 import common_utils as cu
 import gdal
 import heapq
-import temp2 as t2
 
 
 # 根据连续三个像元的索引判断溢出方向: 第一个点索引 第二个点索引 第三个点索引 溢出方向(返回)

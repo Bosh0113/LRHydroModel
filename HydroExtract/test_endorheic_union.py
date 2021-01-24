@@ -1,5 +1,5 @@
 import common_utils as cu
-import sub_basins_endorheic as sbe
+import endorheic_basins_union as sbe
 import gdal
 
 if __name__ == '__main__':
