@@ -47,6 +47,9 @@ def judge_spill_dir(last_i, current_i, next_i):
     # 左左
     elif sbu.second_point_orientation(last_i, current_i) == 4 and sbu.second_point_orientation(current_i, next_i) == 4:
         return 7
+    # 根据两个栅格判断
+    else:
+        pass
     return 0
 
 
@@ -102,11 +105,17 @@ def spill_point_dir(inner_ras_indexes, dem_ds):
 
 # 返回内流区溢满出流位置及出流方向: 流域边界GeoJSON路径 DEM数据路径 溢出位置(返回) 溢出方向(返回) 接收点坐标(返回)
 def basin_spill(boundary_geoj, dem_tif):
-    polygons_points = sbu.get_polygon_points(boundary_geoj)
-    if len(polygons_points) == 1:
-        polygon_pts = polygons_points[0]
+    # 获得多边形边界信息
+    polygons_array = sbu.get_polygon_points(boundary_geoj)
+    # 找到主要边界所在多边形
+    main_polygon, main_index = sbu.get_main_polygon(polygons_array)
+    # 判断是否需要更新岛到边界
+    if len(polygons_array[main_index['no_island']]) == 1:
+        polygon_pts = main_polygon
     else:
-        polygon_pts = sbu.update_boundary_polygon(polygons_points)
+        # 更新岛到主要外边界
+        polygon_pts = sbu.update_island2boundary(polygons_array[main_index['polygon_index']])
+
     dem_ds = gdal.Open(dem_tif)
 
     p_clockwise = sbu.is_clockwise(polygon_pts)
@@ -118,8 +127,28 @@ def basin_spill(boundary_geoj, dem_tif):
             p_offs.append(cu.coord_to_off(point, dem_ds))
         # 获取多边形其边对应的所有栅格索引的集合
         polygon_ras_indexes = sbu.raster_index_on_polygon(p_offs)
+
+        # 更新边界外部多边形内像元到内边界栅格集内
+        # 记录多个多边形连接处索引
+        joint_offs = []
+        if len(polygons_array) > 1:
+            polygon_ras_indexes, joint_offs = sbu.update_outer2polygons(polygon_ras_indexes, dem_ds, polygons_array, main_index['polygon_index'])
+
         # 得到多边形边界内部邻接栅格像元的索引
-        inner_ras_indexes = sbu.inner_boundary_raster_indexes(polygon_ras_indexes)
+        inner_ras_indexes = sbu.inner_boundary_raster_indexes(polygon_ras_indexes, joint_offs)
+
+        # # 输出到tif
+        # temp_path = r'G:\Graduation\Program\Data\42\boundary.tif'
+        # file_format = "GTiff"
+        # driver = gdal.GetDriverByName(file_format)
+        # temp_ds = driver.Create(temp_path, dem_ds.RasterXSize, dem_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
+        # temp_ds.SetGeoTransform(dem_ds.GetGeoTransform())
+        # temp_ds.SetProjection(dem_ds.GetProjection())
+        # temp_ds.GetRasterBand(1).SetNoDataValue(-1)
+        # for off_index in range(len(inner_ras_indexes)):
+        #     off = inner_ras_indexes[off_index]
+        #     cu.set_raster_int_value(temp_ds, off[0], off[1], off_index)
+        # temp_ds = None
 
         # 得到流域内边界最低点及出流方向
         spill_point, spill_dir, reception_pt = spill_point_dir(inner_ras_indexes, dem_ds)
@@ -137,8 +166,10 @@ if __name__ == '__main__':
     start = time.perf_counter()
 
     workspace = r'G:\Graduation\Program\Data\41\endorheic_area0\test4'
-    boundary_geoj_path = workspace + '/data/basin4.geojson'
-    dem_tif_path = workspace + '/data/dem4.tif'
+    # boundary_geoj_path = workspace + '/data/basin4.geojson'
+    boundary_geoj_path = r'G:\Graduation\Program\Data\42\geojson\28153.geojson'
+    # dem_tif_path = workspace + '/data/dem4.tif'
+    dem_tif_path = r'G:\Graduation\Program\Data\42\data\28153_dem.tif'
     s_pt, s_dir, reception_coord = basin_spill(boundary_geoj_path, dem_tif_path)
     if len(s_pt) > 0:
         print('raster index: ', s_pt, ' direction: ', s_dir, 'next point location: ', reception_coord)

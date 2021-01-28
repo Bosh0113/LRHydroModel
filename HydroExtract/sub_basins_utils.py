@@ -1,4 +1,5 @@
 import json
+import common_utils as cu
 
 
 # 从GeoJSON数据中获取多边形点集: GeoJSON路径
@@ -15,23 +16,59 @@ def get_polygon_points(geojson_path):
         if FeatureObj['geometry']['type'] == 'MultiPolygon':
             polygons = FeatureObj['geometry']['coordinates']
             for polygon in polygons:
+                polygon_array = []
                 for polygon_item in polygon:
                     polygon_points = []
                     for point in polygon_item:
                         polygon_points.append(point)
-                    polygons_array.append(polygon_points)
+                    polygon_array.append(polygon_points)
+                polygons_array.append(polygon_array)
         elif FeatureObj['geometry']['type'] == 'Polygon':
             polygon = FeatureObj['geometry']['coordinates']
+            polygon_array = []
             for polygon_item in polygon:
                 polygon_points = []
                 for point in polygon_item:
                     polygon_points.append(point)
-                polygons_array.append(polygon_points)
+                polygon_array.append(polygon_points)
+            polygons_array.append(polygon_array)
     return polygons_array
 
 
+# 找到主要多边形边界: 多边形数组 主要多边形外边界(返回) 主要多边形所在数组索引(返回)
+def get_main_polygon(polygons_array):
+    # 记录主要多边形边界
+    main_polygon = []
+
+    # 记录主要多边形边界在多边形集合的位置索引和多边形内的位置索引，并给出是否存在岛
+    main_index = {
+        'polygon_index': 0,
+        'item_index': 0,
+        'no_island': 1
+    }
+
+    # 记录多边形大小
+    polygon_size = 0
+
+    for polygon_index in range(len(polygons_array)):
+        polygon = polygons_array[polygon_index]
+        for item_index in range(len(polygon)):
+            polygon_item = polygon[item_index]
+            if len(polygon_item) > polygon_size:
+                polygon_size = len(polygon_item)
+                main_polygon = polygon_item[:]
+                main_index['polygon_index'] = polygon_index
+                main_index['item_index'] = item_index
+
+    # 判断是否存在岛
+    if len(polygons_array[main_index['polygon_index']]) > 1:
+        main_index['no_island'] = 0
+
+    return main_polygon, main_index
+
+
 # 更新流域边界表达: 多边形数组(含岛) 更新后的多边形(返回，合并邻接岛的外边界)
-def update_boundary_polygon(polygon_array):
+def update_island2boundary(polygon_array):
     old_boundary = polygon_array[0]
     new_boundary = old_boundary[:]
     for index in range(1, len(polygon_array)):
@@ -44,16 +81,54 @@ def update_boundary_polygon(polygon_array):
                 on_flag = 1
                 on_point = point[:]
         if on_flag:
-            print(len(new_boundary))
+            # print(len(new_boundary))
             on_index = new_boundary.index(on_point)
             # 貌似只存在一种情况
             polygon_item.remove(on_point)
             polygon_item.reverse()
             for item in polygon_item:
                 new_boundary.insert(on_index + 1, item)
-            print(len(new_boundary))
+            # print(len(new_boundary))
 
     return new_boundary
+
+
+# 将主边界外部细碎像元考虑进来: 多边形上对应栅格集的索引集合 索引参考数据集 所有多边形数据 主要多边形的索引 新的索引集合(返回)
+def update_outer2polygons(polygon_ras_indexes, refer_ds, polygons_array, main_p_index):
+    joint_offs = []
+    for polygon_index in range(len(polygons_array)):
+        # 遍历其他多边形
+        if polygon_index != main_p_index:
+            polygon = polygons_array[polygon_index]
+            if len(polygon) == 1:
+                polygon = polygon[0]
+                if len(polygon) == 5:
+                    for index in range(len(polygon)):
+                        polygon_pt = polygon[index]
+                        pt_off = cu.coord_to_off(polygon_pt, refer_ds)
+                        if pt_off in polygon_ras_indexes:
+                            joint_offs.append(pt_off)
+                            in_main_index = polygon_ras_indexes.index(pt_off)
+                            join_off = []
+                            for n_index in range(index + 1, len(polygon)):
+                                pt = polygon[n_index]
+                                off = cu.coord_to_off(pt, refer_ds)
+                                if off not in join_off:
+                                    join_off.append(off)
+                            for n_index in range(0, index):
+                                pt = polygon[n_index]
+                                off = cu.coord_to_off(pt, refer_ds)
+                                if off not in join_off:
+                                    join_off.append(off)
+                            join_off.reverse()
+                            for off in join_off:
+                                polygon_ras_indexes.insert(in_main_index, off)
+                else:
+                    print('暂不支持较大多边形')
+            else:
+                print('暂不支持含岛多边形')
+
+    return polygon_ras_indexes, joint_offs
 
 
 # 判断点集顺序(Green方法): 点集 判断结果(返回，-1逆时针/1顺时针)
@@ -124,8 +199,8 @@ def second_point_orientation(point_f, point_s):
     return 0
 
 
-# 根据连续三个点获得中间点所关联的栅格像元索引: 第一个点索引 第二个点索引 第三个点索引 栅格像元索引数组(返回)
-def get_inner_boundary_raster_index(last_i, current_i, next_i):
+# 根据连续三个点获得中间点所关联的栅格像元索引: 第一个点索引 第二个点索引 第三个点索引 多个多边形连接点索引 栅格像元索引数组(返回)
+def get_inner_boundary_raster_index(last_i, current_i, next_i, joint_offs):
 
     raster_indexes = []
     x_2 = current_i[0]
@@ -137,14 +212,18 @@ def get_inner_boundary_raster_index(last_i, current_i, next_i):
         raster_indexes.append([x_2, y_2 - 1])
     # 上右
     elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 2:
-        pass
+        if next_i in joint_offs:
+            raster_indexes.append(current_i)
+        # pass
     # 上左
     elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 4:
-        raster_indexes.append([x_2, y_2 - 1])
+        if current_i not in joint_offs:
+            raster_indexes.append([x_2, y_2 - 1])
         raster_indexes.append([x_2 - 1, y_2 - 1])
     # 右上
     elif second_point_orientation(last_i, current_i) == 2 and second_point_orientation(current_i, next_i) == 1:
-        raster_indexes.append([x_2, y_2])
+        if current_i not in joint_offs:
+            raster_indexes.append([x_2, y_2])
         raster_indexes.append([x_2, y_2 - 1])
     # 右右
     elif second_point_orientation(last_i, current_i) == 2 and second_point_orientation(current_i, next_i) == 2:
@@ -154,7 +233,8 @@ def get_inner_boundary_raster_index(last_i, current_i, next_i):
         pass
     # 下右
     elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 2:
-        raster_indexes.append([x_2 - 1, y_2])
+        if current_i not in joint_offs:
+            raster_indexes.append([x_2 - 1, y_2])
         raster_indexes.append([x_2, y_2])
     # 下下
     elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 3:
@@ -167,7 +247,8 @@ def get_inner_boundary_raster_index(last_i, current_i, next_i):
         pass
     # 左下
     elif second_point_orientation(last_i, current_i) == 4 and second_point_orientation(current_i, next_i) == 3:
-        raster_indexes.append([x_2 - 1, y_2 - 1])
+        if current_i not in joint_offs:
+            raster_indexes.append([x_2 - 1, y_2 - 1])
         raster_indexes.append([x_2 - 1, y_2])
     # 左左
     elif second_point_orientation(last_i, current_i) == 4 and second_point_orientation(current_i, next_i) == 4:
@@ -175,17 +256,17 @@ def get_inner_boundary_raster_index(last_i, current_i, next_i):
     return raster_indexes
 
 
-# 计算多边形内部边缘栅格点左上角索引: 多边形边界上对应栅格数据的索引集合 多边形内部边缘栅格点左上角索引集合(返回)
-def inner_boundary_raster_indexes(polygon_ras_indexes):
+# 计算多边形内部边缘栅格点左上角索引: 多边形边界上对应栅格数据的索引集合 多个多边形连接点索引 多边形内部边缘栅格点左上角索引集合(返回)
+def inner_boundary_raster_indexes(polygon_ras_indexes, joint_offs):
     inner_ras_indexes = []
     for i in range(1, len(polygon_ras_indexes) - 1):
         last_index = polygon_ras_indexes[i - 1]
         current_index = polygon_ras_indexes[i]
         next_index = polygon_ras_indexes[i + 1]
-        i_r_indexes = get_inner_boundary_raster_index(last_index, current_index, next_index)
+        i_r_indexes = get_inner_boundary_raster_index(last_index, current_index, next_index, joint_offs)
         for inner_ras_index in i_r_indexes:
             inner_ras_indexes.append(inner_ras_index)
-    i_r_indexes = get_inner_boundary_raster_index(polygon_ras_indexes[len(polygon_ras_indexes) - 2], polygon_ras_indexes[0], polygon_ras_indexes[1])
+    i_r_indexes = get_inner_boundary_raster_index(polygon_ras_indexes[len(polygon_ras_indexes) - 2], polygon_ras_indexes[0], polygon_ras_indexes[1], joint_offs)
     for inner_ras_index in i_r_indexes:
         inner_ras_indexes.append(inner_ras_index)
 

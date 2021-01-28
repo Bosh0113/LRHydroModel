@@ -60,6 +60,7 @@ def outlets_index_order(boundary_array, outlet_ds):
 # 以四个大流域为界将流域出口分组: 排好序的流域出水口集合 汇流累积量数据DataSet 分组后的出水口集合(返回)
 def divide_outlet_to_group(outlets_order, acc_ds):
     acc_array = []
+    # 获得所有出口点的acc值
     for outlet in outlets_order:
         acc_value = cu.get_raster_float_value(acc_ds, outlet[0], outlet[1])
         acc_array.append(acc_value)
@@ -112,53 +113,65 @@ def outlet_basins(outlet, result_ds, s_id, dir_ds):
 
 # 对沿海流域集合进行次级流域分组: 次级流域划分结果路径 原流域边界GeoJSON 流域集的出水口数据路径 汇流累积量数据路径 流向数据路径
 def basin_divide(sub_basins_tif, boundary_geoj, trace_tif, acc_tif, dir_tif):
-    polygons_points = sbu.get_polygon_points(boundary_geoj)
-    if len(polygons_points) == 1:
-
-        trace_ds = gdal.Open(trace_tif)
-        acc_ds = gdal.Open(acc_tif)
-        dir_ds = gdal.Open(dir_tif)
-
-        polygon_pts = polygons_points[0]
-        p_clockwise = sbu.is_clockwise(polygon_pts)
-        # 边界为顺时针多边形
-        if p_clockwise:
-            # 获取多边形顶点在栅格数据中的索引
-            p_offs = []
-            for point in polygon_pts:
-                p_offs.append(cu.coord_to_off(point, trace_ds))
-            # 获取多边形其边对应的所有栅格索引的集合
-            polygon_ras_indexes = sbu.raster_index_on_polygon(p_offs)
-            # 得到多边形边界内部邻接栅格像元的索引
-            inner_ras_indexes = sbu.inner_boundary_raster_indexes(polygon_ras_indexes)
-            # 得到流域集合边界上出口栅格顺时针编号
-            outlets_order = outlets_index_order(inner_ras_indexes, trace_ds)
-            # 以四个大流域为界将流域出口分组
-            outlet_groups = divide_outlet_to_group(outlets_order, acc_ds)
-
-            file_format = "GTiff"
-            driver = gdal.GetDriverByName(file_format)
-            sub_ds = driver.Create(sub_basins_tif, trace_ds.RasterXSize, trace_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
-            sub_ds.SetGeoTransform(trace_ds.GetGeoTransform())
-            sub_ds.SetProjection(trace_ds.GetProjection())
-            sub_ds.GetRasterBand(1).SetNoDataValue(-1)
-
-            for i in range(len(outlet_groups)):
-                outlet_group = outlet_groups[i]
-                for outlet in outlet_group:
-                    x_off = outlet[0]
-                    y_off = outlet[1]
-                    if cu.in_data(x_off, y_off, sub_ds.RasterXSize, sub_ds.RasterYSize):
-                        outlet_basins(outlet, sub_ds, i + 1, dir_ds)
-        else:
-            print('No support anticlockwise!')
-
-        trace_ds = None
-        sub_ds = None
-        acc_ds = None
-        dir_ds = None
+    # 获得多边形边界信息
+    polygons_array = sbu.get_polygon_points(boundary_geoj)
+    # 找到主要边界所在多边形
+    main_polygon, main_index = sbu.get_main_polygon(polygons_array)
+    # 判断是否需要更新岛到边界
+    if len(main_index['no_island']) == 1:
+        polygon_pts = main_polygon
     else:
-        print('error!')
+        # 更新岛到主要外边界
+        polygon_pts = sbu.update_island2boundary(polygons_array[main_index['polygon_index']])
+
+    trace_ds = gdal.Open(trace_tif)
+    acc_ds = gdal.Open(acc_tif)
+    dir_ds = gdal.Open(dir_tif)
+
+    p_clockwise = sbu.is_clockwise(polygon_pts)
+    # 边界为顺时针多边形
+    if p_clockwise:
+        # 获取多边形顶点在栅格数据中的索引
+        p_offs = []
+        for point in polygon_pts:
+            p_offs.append(cu.coord_to_off(point, trace_ds))
+        # 获取多边形其边对应的所有栅格索引的集合
+        polygon_ras_indexes = sbu.raster_index_on_polygon(p_offs)
+
+        # 更新边界外部多边形内像元到内边界栅格集内
+        # 记录多个多边形连接处索引
+        joint_offs = []
+        if len(polygons_array) > 1:
+            polygon_ras_indexes, joint_offs = sbu.update_outer2polygons(polygon_ras_indexes, trace_ds, polygons_array, main_index['polygon_index'])
+
+        # 得到多边形边界内部邻接栅格像元的索引
+        inner_ras_indexes = sbu.inner_boundary_raster_indexes(polygon_ras_indexes, joint_offs)
+        # 得到流域集合边界上出口栅格顺时针编号
+        outlets_order = outlets_index_order(inner_ras_indexes, trace_ds)
+        # 以四个大流域为界将流域出口分组
+        outlet_groups = divide_outlet_to_group(outlets_order, acc_ds)
+
+        file_format = "GTiff"
+        driver = gdal.GetDriverByName(file_format)
+        sub_ds = driver.Create(sub_basins_tif, trace_ds.RasterXSize, trace_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
+        sub_ds.SetGeoTransform(trace_ds.GetGeoTransform())
+        sub_ds.SetProjection(trace_ds.GetProjection())
+        sub_ds.GetRasterBand(1).SetNoDataValue(-1)
+
+        for i in range(len(outlet_groups)):
+            outlet_group = outlet_groups[i]
+            for outlet in outlet_group:
+                x_off = outlet[0]
+                y_off = outlet[1]
+                if cu.in_data(x_off, y_off, sub_ds.RasterXSize, sub_ds.RasterYSize):
+                    outlet_basins(outlet, sub_ds, i + 1, dir_ds)
+    else:
+        print('No support anticlockwise!')
+
+    trace_ds = None
+    sub_ds = None
+    acc_ds = None
+    dir_ds = None
 
 
 if __name__ == '__main__':
@@ -168,9 +181,10 @@ if __name__ == '__main__':
     boundary_geoj_path = workspace + '/data/test_boundary.geojson'
     # cu.shp_to_geojson(boundary_shp, boundary_geoj)
 
-    outlet_path = workspace + "/data/trace.tif"
-    acc_path = workspace + "/data/acc_e.tif"
-    dir_path = workspace + "/data/dir_128.tif"
+    data_path = workspace + '/data'
+    outlet_path = data_path + "/trace.tif"
+    acc_path = data_path + "/acc_e.tif"
+    dir_path = data_path + "/dir_128.tif"
     sub_basins_path = workspace + "/sub_basins_test.tif"
     basin_divide(sub_basins_path, boundary_geoj_path, outlet_path, acc_path, dir_path)
     end = time.perf_counter()
