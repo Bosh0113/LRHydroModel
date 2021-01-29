@@ -12,45 +12,44 @@ def judge_spill_dir(last_i, current_i, next_i):
 
     # 三点关系参照文档/论文中关系表
     # 上上
-    if sbu.second_point_orientation(last_i, current_i) == 1 and sbu.second_point_orientation(current_i, next_i) == 1:
+    if sbu.second_point_orientation(last_i, current_i) == 3 and sbu.second_point_orientation(current_i, next_i) == 3:
         return 5
     # 上右
-    elif sbu.second_point_orientation(last_i, current_i) == 1 and sbu.second_point_orientation(current_i, next_i) == 2:
+    elif sbu.second_point_orientation(last_i, current_i) == 3 and sbu.second_point_orientation(current_i, next_i) == 1:
         return 4
     # 上左
-    elif sbu.second_point_orientation(last_i, current_i) == 1 and sbu.second_point_orientation(current_i, next_i) == 4:
+    elif sbu.second_point_orientation(last_i, current_i) == 3 and sbu.second_point_orientation(current_i, next_i) == 5:
         return 6
     # 右上
-    elif sbu.second_point_orientation(last_i, current_i) == 2 and sbu.second_point_orientation(current_i, next_i) == 1:
+    elif sbu.second_point_orientation(last_i, current_i) == 1 and sbu.second_point_orientation(current_i, next_i) == 3:
         return 4
     # 右右
-    elif sbu.second_point_orientation(last_i, current_i) == 2 and sbu.second_point_orientation(current_i, next_i) == 2:
+    elif sbu.second_point_orientation(last_i, current_i) == 1 and sbu.second_point_orientation(current_i, next_i) == 1:
         return 3
     # 右下
-    elif sbu.second_point_orientation(last_i, current_i) == 2 and sbu.second_point_orientation(current_i, next_i) == 3:
+    elif sbu.second_point_orientation(last_i, current_i) == 1 and sbu.second_point_orientation(current_i, next_i) == 7:
         return 2
     # 下右
-    elif sbu.second_point_orientation(last_i, current_i) == 3 and sbu.second_point_orientation(current_i, next_i) == 2:
+    elif sbu.second_point_orientation(last_i, current_i) == 7 and sbu.second_point_orientation(current_i, next_i) == 1:
         return 2
     # 下下
-    elif sbu.second_point_orientation(last_i, current_i) == 3 and sbu.second_point_orientation(current_i, next_i) == 3:
+    elif sbu.second_point_orientation(last_i, current_i) == 7 and sbu.second_point_orientation(current_i, next_i) == 7:
         return 1
     # 下左
-    elif sbu.second_point_orientation(last_i, current_i) == 3 and sbu.second_point_orientation(current_i, next_i) == 4:
+    elif sbu.second_point_orientation(last_i, current_i) == 7 and sbu.second_point_orientation(current_i, next_i) == 5:
         return 8
     # 左上
-    elif sbu.second_point_orientation(last_i, current_i) == 4 and sbu.second_point_orientation(current_i, next_i) == 1:
+    elif sbu.second_point_orientation(last_i, current_i) == 5 and sbu.second_point_orientation(current_i, next_i) == 3:
         return 6
     # 左下
-    elif sbu.second_point_orientation(last_i, current_i) == 4 and sbu.second_point_orientation(current_i, next_i) == 3:
+    elif sbu.second_point_orientation(last_i, current_i) == 5 and sbu.second_point_orientation(current_i, next_i) == 7:
         return 8
     # 左左
-    elif sbu.second_point_orientation(last_i, current_i) == 4 and sbu.second_point_orientation(current_i, next_i) == 4:
+    elif sbu.second_point_orientation(last_i, current_i) == 5 and sbu.second_point_orientation(current_i, next_i) == 5:
         return 7
     # 根据两个栅格判断
     else:
-        pass
-    return 0
+        return sbu.second_point_orientation(next_i, current_i)
 
 
 # 计算溢出方向: 内边界栅格追踪数组 溢出点在数组中的索引 溢出方向(返回)

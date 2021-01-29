@@ -99,30 +99,37 @@ def update_outer2polygons(polygon_ras_indexes, refer_ds, polygons_array, main_p_
     for polygon_index in range(len(polygons_array)):
         # 遍历其他多边形
         if polygon_index != main_p_index:
+            # 得到多边形
             polygon = polygons_array[polygon_index]
+            # 若不存在岛
             if len(polygon) == 1:
                 polygon = polygon[0]
+                # 若为单个像元
                 if len(polygon) == 5:
-                    for index in range(len(polygon)):
-                        polygon_pt = polygon[index]
+                    temp_list = polygon[:len(polygon) - 1]
+                    for index in range(len(temp_list)):
+                        polygon_pt = temp_list[index]
                         pt_off = cu.coord_to_off(polygon_pt, refer_ds)
+                        # 若相邻
                         if pt_off in polygon_ras_indexes:
+                            # 记录相邻点索引
                             joint_offs.append(pt_off)
+                            # 获取插入到边界点集的位置
                             in_main_index = polygon_ras_indexes.index(pt_off)
+                            # 初始化插入数组
                             join_off = []
-                            for n_index in range(index + 1, len(polygon)):
-                                pt = polygon[n_index]
+                            for n_index in range(index, len(temp_list)):
+                                pt = temp_list[n_index]
                                 off = cu.coord_to_off(pt, refer_ds)
-                                if off not in join_off:
-                                    join_off.append(off)
+                                join_off.append(off)
                             for n_index in range(0, index):
-                                pt = polygon[n_index]
+                                pt = temp_list[n_index]
                                 off = cu.coord_to_off(pt, refer_ds)
-                                if off not in join_off:
-                                    join_off.append(off)
+                                join_off.append(off)
                             join_off.reverse()
                             for off in join_off:
                                 polygon_ras_indexes.insert(in_main_index, off)
+                            break
                 else:
                     print('暂不支持较大多边形')
             else:
@@ -178,24 +185,36 @@ def raster_index_on_polygon(polygon_pts_index):
     return polygon_ras_indexes
 
 
-# 判断第二个点在第一个点的方位(栅格索引): 第一个点 第二个点 方向标识(返回，上右下左：1234)
+# 判断第二个点在第一个点的方位(栅格索引): 第一个点 第二个点 方向标识(返回，方向同TauDEM)
 def second_point_orientation(point_f, point_s):
     f_x = point_f[0]
     f_y = point_f[1]
     s_x = point_s[0]
     s_y = point_s[1]
-    # 上
-    if f_x == s_x and f_y > s_y:
-        return 1
     # 右
-    elif f_x < s_x and f_y == s_y:
+    if f_x < s_x and f_y == s_y:
+        return 1
+    # 右上
+    if f_x < s_x and f_y > s_y:
         return 2
-    # 下
-    elif f_x == s_x and f_y < s_y:
+    # 上
+    elif f_x == s_x and f_y > s_y:
         return 3
+    # 左上
+    elif f_x > s_x and f_y > s_y:
+        return 4
     # 左
     elif f_x > s_x and f_y == s_y:
-        return 4
+        return 5
+    # 左下
+    elif f_x > s_x and f_y < s_y:
+        return 6
+    # 下
+    elif f_x == s_x and f_y < s_y:
+        return 7
+    # 右下
+    elif f_x < s_x and f_y < s_y:
+        return 8
     return 0
 
 
@@ -208,50 +227,48 @@ def get_inner_boundary_raster_index(last_i, current_i, next_i, joint_offs):
 
     # 三点关系参照文档/论文中关系表
     # 上上
-    if second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 1:
+    if second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 3:
         raster_indexes.append([x_2, y_2 - 1])
     # 上右
-    elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 2:
-        if next_i in joint_offs:
-            raster_indexes.append(current_i)
-        # pass
+    elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 1:
+        pass
     # 上左
-    elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 4:
+    elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 5:
         if current_i not in joint_offs:
             raster_indexes.append([x_2, y_2 - 1])
         raster_indexes.append([x_2 - 1, y_2 - 1])
     # 右上
-    elif second_point_orientation(last_i, current_i) == 2 and second_point_orientation(current_i, next_i) == 1:
+    elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 3:
         if current_i not in joint_offs:
             raster_indexes.append([x_2, y_2])
         raster_indexes.append([x_2, y_2 - 1])
     # 右右
-    elif second_point_orientation(last_i, current_i) == 2 and second_point_orientation(current_i, next_i) == 2:
+    elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 1:
         raster_indexes.append([x_2, y_2])
     # 右下
-    elif second_point_orientation(last_i, current_i) == 2 and second_point_orientation(current_i, next_i) == 3:
+    elif second_point_orientation(last_i, current_i) == 1 and second_point_orientation(current_i, next_i) == 7:
         pass
     # 下右
-    elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 2:
+    elif second_point_orientation(last_i, current_i) == 7 and second_point_orientation(current_i, next_i) == 1:
         if current_i not in joint_offs:
             raster_indexes.append([x_2 - 1, y_2])
         raster_indexes.append([x_2, y_2])
     # 下下
-    elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 3:
+    elif second_point_orientation(last_i, current_i) == 7 and second_point_orientation(current_i, next_i) == 7:
         raster_indexes.append([x_2 - 1, y_2])
     # 下左
-    elif second_point_orientation(last_i, current_i) == 3 and second_point_orientation(current_i, next_i) == 4:
+    elif second_point_orientation(last_i, current_i) == 7 and second_point_orientation(current_i, next_i) == 5:
         pass
     # 左上
-    elif second_point_orientation(last_i, current_i) == 4 and second_point_orientation(current_i, next_i) == 1:
+    elif second_point_orientation(last_i, current_i) == 5 and second_point_orientation(current_i, next_i) == 3:
         pass
     # 左下
-    elif second_point_orientation(last_i, current_i) == 4 and second_point_orientation(current_i, next_i) == 3:
+    elif second_point_orientation(last_i, current_i) == 5 and second_point_orientation(current_i, next_i) == 7:
         if current_i not in joint_offs:
             raster_indexes.append([x_2 - 1, y_2 - 1])
         raster_indexes.append([x_2 - 1, y_2])
     # 左左
-    elif second_point_orientation(last_i, current_i) == 4 and second_point_orientation(current_i, next_i) == 4:
+    elif second_point_orientation(last_i, current_i) == 5 and second_point_orientation(current_i, next_i) == 5:
         raster_indexes.append([x_2 - 1, y_2 - 1])
     return raster_indexes
 
