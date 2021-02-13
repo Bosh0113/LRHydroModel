@@ -42,27 +42,31 @@ def data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_pat
 	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="dem", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
-	tiled_raster_layer.save_stitched(dem_tif_path)
+	m_tiled_raster_layer = tiled_raster_layer.mask(polys)
+	m_tiled_raster_layer.save_stitched(dem_tif_path)
 
 	print("Get Direction")
 	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="direction", layer_zoom=0, query_geom=polys)
 	# tiled_raster_layer = gps.query(uri=catalog_path, layer_name="dir", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
-	tiled_raster_layer.save_stitched(dir_tif_path)
+	m_tiled_raster_layer = tiled_raster_layer.mask(polys)
+	m_tiled_raster_layer.save_stitched(dir_tif_path)
 
 	print("Get Accumulation")
 	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="accumulation", layer_zoom=0, query_geom=polys)
 	# tiled_raster_layer = gps.query(uri=catalog_path, layer_name="acc", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
-	tiled_raster_layer.save_stitched(acc_tif_path)
+	m_tiled_raster_layer = tiled_raster_layer.mask(polys)
+	m_tiled_raster_layer.save_stitched(acc_tif_path)
 
 	print("Get Lakes")
 	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="lakes", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
-	tiled_raster_layer.save_stitched(lake_tif_path)
+	m_tiled_raster_layer = tiled_raster_layer.mask(polys)
+	m_tiled_raster_layer.save_stitched(lake_tif_path)
 
 
 if __name__ == '__main__':
