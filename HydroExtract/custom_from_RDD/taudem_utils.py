@@ -7,6 +7,16 @@ taudem_path = '/usr/local/TauDEM/src/build'
 # taudem_path = '/share/home/liujunzhi/liujunzhi/TauDEM/src/build'
 
 
+# 填洼：DEM(input) 填洼后的DEM(output)
+def pit_remove(dem_tif_path, dem_filled_path):
+    print("Pit Remove")
+    # cmd语句调用TauDEM的Pit Remove程序
+    dem_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/pitremove -z ' + dem_tif_path + ' -fel ' + dem_filled_path
+    print(dem_cmd)
+    d = os.system(dem_cmd)
+    print(d)
+
+
 # 计算流向：DEM(input) 流向(output) 坡度(output)
 def d8_flow_directions(dem_tif_path, dir_tif_path, slope_output_path):
     print("D8 Flow Directions")

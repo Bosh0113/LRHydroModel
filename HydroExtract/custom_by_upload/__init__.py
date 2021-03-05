@@ -1,6 +1,7 @@
 # coding=utf-8
 import os
 import time
+import taudem_utils as tu
 import get_dir_acc as gda
 import common_utils as cu
 import vector_rasterize as vr
@@ -13,7 +14,7 @@ import shutil
 import gdal
 
 
-# 方法主入口： 数据存储路径 兴趣范围路径 湖泊/水库面积阈值 河网提取阈值
+# 方法主入口： 数据存储路径 DEM数据路径 湖泊/水库范围数据路径 河网提取阈值
 def start_main(work_path, dem_tif, lakes_shp, river_th):
     start = time.perf_counter()
 
@@ -26,6 +27,14 @@ def start_main(work_path, dem_tif, lakes_shp, river_th):
     result_path = work_path + '/result'
     if not os.path.exists(result_path):
         os.makedirs(result_path)
+
+    print("-------------------------------------DEM Pit Remove---------------------------------")
+    stage_time = time.perf_counter()
+    dem_filled_tif = process_path + "/dem_filled.tif"
+    # DEM填洼
+    tu.pit_remove(dem_tif, dem_filled_tif)
+    over_time = time.perf_counter()
+    print("Run time: ", over_time - stage_time, 's')
 
     print("----------------------------Get Direction and Accumulation--------------------------")
     stage_time = time.perf_counter()
@@ -80,7 +89,7 @@ def start_main(work_path, dem_tif, lakes_shp, river_th):
     print("------------------------------------Get Watershed-----------------------------------")
     stage_time = time.perf_counter()
     # 提取子流域
-    we.watershed_extract(process_path, dem_tif, dir_tif, acc_tif, river_tif, water_s_s_tif_path)
+    we.watershed_extract(process_path, dem_filled_tif, dir_tif, acc_tif, river_tif, water_s_s_tif_path)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
