@@ -6,8 +6,8 @@ from shapely.geometry import MultiPolygon
 from shapely.geometry import Polygon
 
 
-# 查询区域内数据: 数据目录路径 范围路径(GeoJSON) dem结果路径 流向结果路径 汇流累积量结果路径 湖泊/水库结果路径
-def data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_path, lake_tif_path):
+# 查询区域内数据: 数据目录路径 范围路径(GeoJSON) dem结果路径 流向结果路径 汇流累积量结果路径
+def data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_path):
 	catalog_path = "file://" + catalog_path
 	conf = gps.geopyspark_conf(master="local[*]", appName="master")
 	pysc = SparkContext(conf=conf)
@@ -58,12 +58,6 @@ def data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_pat
 	print(tiled_raster_layer.layer_metadata.extent)
 	tiled_raster_layer.save_stitched(acc_tif_path)
 
-	print("Get Lakes")
-	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="lakes", layer_zoom=0, query_geom=polys)
-	print(tiled_raster_layer.count())
-	print(tiled_raster_layer.layer_metadata.extent)
-	tiled_raster_layer.save_stitched(lake_tif_path)
-
 
 if __name__ == '__main__':
 	workspace = "/usr/local/large_scale_hydro/Test/1"
@@ -72,5 +66,4 @@ if __name__ == '__main__':
 	dem_result = workspace + '/dem.tif'
 	dir_result = workspace + '/dir.tif'
 	acc_result = workspace + '/acc.tif'
-	lake_result = workspace + '/lakes.tif'
-	data_search(catalog, geojson_path, dem_result, dir_result, acc_result, lake_result)
+	data_search(catalog, geojson_path, dem_result, dir_result, acc_result)

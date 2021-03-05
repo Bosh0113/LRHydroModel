@@ -35,8 +35,8 @@ if __name__ == '__main__':
     workspace = r'G:\Graduation\Program\Data\38'
     dir_tif_path = workspace + '/data/dir_d8.tif'
     acc_tif_path = workspace + '/data/acc.tif'
-    stream_th_value = 10.0
-    pfaf_level = 1
+    stream_th_value = 5.0
+    pfaf_level = 3
     pfaf_tif_path = workspace + '/result/pfaf_' + str(pfaf_level) + '.tif'
 
     get_pfafstetter_code(dir_tif_path, acc_tif_path, pfaf_tif_path, stream_th_value, pfaf_level)
