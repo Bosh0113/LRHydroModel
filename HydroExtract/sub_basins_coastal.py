@@ -64,8 +64,25 @@ def divide_outlet_to_group(outlets_order, acc_ds):
     for outlet in outlets_order:
         acc_value = cu.get_raster_float_value(acc_ds, outlet[0], outlet[1])
         acc_array.append(acc_value)
+
     # 得到最大4个acc值所对应的数组索引
-    max_4_index = list(map(acc_array.index, heapq.nlargest(4, acc_array)))
+    max_4_acc = []
+    max_4_index = []
+    for index in range(len(acc_array)):
+        acc_value = acc_array[index]
+        max_4_acc.append(acc_value)
+        max_4_index.append(index)
+        if len(max_4_acc) > 4:
+            array_index = list(map(max_4_acc.index, heapq.nlargest(4, max_4_acc)))
+            n_max_4_acc = []
+            n_max_4_index = []
+            for n_index in array_index:
+                n_max_4_acc.append(max_4_acc[n_index])
+                n_max_4_index.append(max_4_index[n_index])
+            max_4_acc = n_max_4_acc[:]
+            max_4_index = n_max_4_index[:]
+    # max_4_index = list(map(acc_array.index, heapq.nlargest(4, acc_array)))
+
     # 对4大acc对应索引从小到大排序
     max_4_index.sort()
     # 根据四大流域对夹杂的中间子流域分组

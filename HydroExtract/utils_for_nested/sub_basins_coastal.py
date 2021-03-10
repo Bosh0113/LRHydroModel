@@ -64,11 +64,29 @@ def divide_outlet_to_group(outlets_order, acc_ds):
     for outlet in outlets_order:
         acc_value = cu.get_raster_float_value(acc_ds, outlet[0], outlet[1])
         acc_array.append(acc_value)
+
     # 得到最大4个acc值所对应的数组索引
-    max_4_index = list(map(acc_array.index, heapq.nlargest(4, acc_array)))
+    max_4_acc = []
+    max_4_index = []
+    for index in range(len(acc_array)):
+        acc_value = acc_array[index]
+        max_4_acc.append(acc_value)
+        max_4_index.append(index)
+        if len(max_4_acc) > 4:
+            array_index = list(map(max_4_acc.index, heapq.nlargest(4, max_4_acc)))
+            n_max_4_acc = []
+            n_max_4_index = []
+            for n_index in array_index:
+                n_max_4_acc.append(max_4_acc[n_index])
+                n_max_4_index.append(max_4_index[n_index])
+            max_4_acc = n_max_4_acc[:]
+            max_4_index = n_max_4_index[:]
+
+    # max_4_index = list(map(acc_array.index, heapq.nlargest(4, acc_array)))
+
     # 对4大acc对应索引从小到大排序
     max_4_index.sort()
-    print(max_4_index)
+
     # 根据四大流域对夹杂的中间子流域分组
     odd_1 = outlets_order[0:max_4_index[0]]
     even_2 = [outlets_order[max_4_index[0]]]
@@ -163,14 +181,35 @@ def basin_divide(sub_basins_tif, boundary_geoj, trace_tif, acc_tif, dir_tif):
 
         # 得到流域集合边界上出口栅格顺时针编号
         outlets_order = outlets_index_order(inner_ras_indexes, trace_ds)
+
+
+        # # 输出到tif
+        # temp_path = r'G:\Graduation\Program\Data\51\nested\5\56\566\process\outlet_order.tif'
+        # file_format = "GTiff"
+        # driver = gdal.GetDriverByName(file_format)
+        # temp_ds = driver.Create(temp_path, trace_ds.RasterXSize, trace_ds.RasterYSize, 1, gdal.GDT_Float32, options=['COMPRESS=DEFLATE'])
+        # temp_ds.SetGeoTransform(trace_ds.GetGeoTransform())
+        # temp_ds.SetProjection(trace_ds.GetProjection())
+        # temp_ds.GetRasterBand(1).SetNoDataValue(-1)
+        # for off_index in range(len(outlets_order)):
+        #     off = outlets_order[off_index]
+        #     cu.set_raster_float_value(temp_ds, off[0], off[1], off_index*0.001)
+        # temp_ds = None
+
+        # 得到排序好的出口索引在acc数据中的索引
+        outlets_order_in_acc = []
+        for outlet in outlets_order:
+            coord = cu.off_to_coord(outlet, trace_ds)
+            outlets_order_in_acc.append(cu.coord_to_off(coord, acc_ds))
+
         # 以四个大流域为界将流域出口分组
-        outlet_groups = divide_outlet_to_group(outlets_order, acc_ds)
+        outlet_groups = divide_outlet_to_group(outlets_order_in_acc, acc_ds)
 
         file_format = "GTiff"
         driver = gdal.GetDriverByName(file_format)
-        sub_ds = driver.Create(sub_basins_tif, trace_ds.RasterXSize, trace_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
-        sub_ds.SetGeoTransform(trace_ds.GetGeoTransform())
-        sub_ds.SetProjection(trace_ds.GetProjection())
+        sub_ds = driver.Create(sub_basins_tif, acc_ds.RasterXSize, acc_ds.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
+        sub_ds.SetGeoTransform(acc_ds.GetGeoTransform())
+        sub_ds.SetProjection(acc_ds.GetProjection())
         sub_ds.GetRasterBand(1).SetNoDataValue(-1)
 
         for i in range(len(outlet_groups)):
