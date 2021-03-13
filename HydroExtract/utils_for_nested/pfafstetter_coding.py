@@ -32,10 +32,10 @@ def get_pfafstetter_code(dir_d8_path, acc_path, pfaf_path, stream_th, level=1):
 if __name__ == '__main__':
     start = time.perf_counter()
 
-    workspace = r'G:\Graduation\Program\Figure\5.7\process_lv12\56625111121'
+    workspace = r'G:\Graduation\Program\Data\45\3\v2\d'
     dir_tif_path = workspace + '/data/dir_o.tif'
     acc_tif_path = workspace + '/data/acc.tif'
-    stream_th_value = 100.0
+    stream_th_value = 3.0
     pfaf_level = 1
     pfaf_tif_path = workspace + '/process/pfaf_' + str(pfaf_level) + '.tif'
 

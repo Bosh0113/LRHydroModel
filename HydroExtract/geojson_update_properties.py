@@ -1,8 +1,8 @@
 import json
 
 
-# 为geojson添加属性描述: geojson文件路径 需要添加的属性键值对
-def geojson_add_properties(geojson_path, add_property_json):
+# 为geojson更新属性描述: geojson文件路径 需要添加的属性键值对
+def geojson_update_properties(geojson_path, add_property_json):
 
     # 新json
     n_json = {}
@@ -32,4 +32,4 @@ if __name__ == '__main__':
         "s_order": 0,
         "down_lake": 0
     }
-    geojson_add_properties(geojson, properties)
+    geojson_update_properties(geojson, properties)

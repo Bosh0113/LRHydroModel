@@ -438,10 +438,10 @@ def get_slope_surface(lake_tif_path, dir_tif_path, acc_tif_path, slope_tif_path,
 # 提取结果为坡面和湖泊/水库的tif数据以及坡面流路的tif数据
 if __name__ == '__main__':
     start = time.perf_counter()
-    base_path = r"G:\Graduation\Program\Data\45\4"
+    base_path = r"G:\Graduation\Program\Data\45\3\v2\a\surface"
     data_path = base_path + '/data'
-    lake_data_path = data_path + '/lakes.tif'
-    dir_data_path = data_path + '/dir_8.tif'
+    lake_data_path = data_path + '/lakes_99.tif'
+    dir_data_path = data_path + '/dir.tif'
     acc_data_path = data_path + '/acc.tif'
 
     workspace_path = base_path + "/process"
@@ -450,6 +450,6 @@ if __name__ == '__main__':
     slope_data_path = workspace_path + "/water_slope_surface.tif"
     route_data_path = workspace_path + "/slope_surface_route.tif"
 
-    get_slope_surface(lake_data_path, dir_data_path, acc_data_path, slope_data_path, route_data_path, 4.0, -9)
+    get_slope_surface(lake_data_path, dir_data_path, acc_data_path, slope_data_path, route_data_path, 100, -9)
     end = time.perf_counter()
     print('Run', end - start, 's')
