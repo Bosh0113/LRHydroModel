@@ -18,9 +18,9 @@ import gdal
 
 
 # RDD数据目录路径
-catalog_path = '/usr/local/large_scale_hydro/catalog'
+catalog_path = '/home/liujz/data/Large_Scale_Watershed/catalog'
 # 湖泊/水库范围边界数据路径
-o_lake_data = '/usr/local/large_scale_hydro/lakes_scale/HyfdroLAKES_gt_1km2.shp'
+o_lake_data = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/lakes_scale/lakes_gt_10km2_full.shp'
 
 
 # 方法主入口： 数据存储路径 兴趣范围路径 湖泊/水库面积阈值 河网提取阈值
@@ -161,8 +161,8 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
 
 
 if __name__ == '__main__':
-    workspace = '/usr/local/large_scale_hydro/Figure/5.1/test_program'
-    extent_geojson = '/usr/local/large_scale_hydro/Figure/5.1/test_program/boundary.geojson'
-    lakes_area_threshold = 1
-    river_threshold = 5
+    workspace = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/slope_surface'
+    extent_geojson = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/slope_surface/basin.geojson'
+    lakes_area_threshold = 10
+    river_threshold = 10.0
     start_main(workspace, extent_geojson, lakes_area_threshold, river_threshold)

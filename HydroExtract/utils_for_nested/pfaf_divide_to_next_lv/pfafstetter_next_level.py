@@ -50,7 +50,7 @@ def pafa_divide_to_next_level(current_geoj, next_level_folder):
     current_pfaf_id = current_basin_name.split('.')[0]
     sub_basins_geojs = os.listdir(sub_basins_folder)
     for sub_basins_geoj in sub_basins_geojs:
-        sub_basin_id = sub_basins_geoj.split('.')[0]
+        sub_basin_id = current_pfaf_id + sub_basins_geoj.split('.')[0]
         # 将pfaf_id更新到属性
         properties = {
             "DN": sub_basin_id,
@@ -59,7 +59,7 @@ def pafa_divide_to_next_level(current_geoj, next_level_folder):
         o_path = sub_basins_folder + '/' + sub_basins_geoj
         gup.geojson_update_properties(o_path, properties)
         # 将结果放在次级层级文件夹下
-        n_path = next_level_folder + '/' + current_pfaf_id + sub_basin_id + '.geojson'
+        n_path = next_level_folder + '/' + sub_basin_id + '.geojson'
         shutil.copy(o_path, n_path)
     # 删除临时文件夹
     shutil.rmtree(temp_folder)

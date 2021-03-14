@@ -338,13 +338,8 @@ def clear_buffer(water_buf):
 # 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据 河系提取阈值 结果数据nodata（可选）
 def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_threshold, no_data=None):
     print("Extract Start")
-    global dataset_res, dataset_dir, dataset_acc, dataset_ol, dataset_ro, river_th, water_ol_bufs, no_data_value, water_channel
+    global dataset_res, dataset_dir, dataset_acc, dataset_ol, dataset_ro, river_th, water_ol_bufs, no_data_value
     river_th = river_threshold
-
-    # 水体河道出入流处
-    water_channel = []
-    # 一像元宽水体外边界集合
-    water_ol_bufs = []
 
     if not os.path.exists(work_path):
         os.makedirs(work_path)

@@ -30,12 +30,12 @@ def filter_lakes_extent_area(o_lake_shp, extent_shp, result_shp, area=0.1):
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    workspace = r"G:\Graduation\Program\Figure\5.3_case\demo\slope_surface_lv7\temp"
+    workspace = "D:/Graduation/Program/Data/31/3"
     # o_lake_data = workspace + "/lakes_gt_1km2.shp"
     # o_lake_data = workspace + "/lakes_gt_1km2_full.shp"
     # extent_data = workspace + "/full_extent.shp"
-    o_lake_data = workspace + "/lakes_gt_1km2_full.shp"
-    extent_data = workspace + "/extent.shp"
+    o_lake_data = workspace + "/lakes_vec.shp"
+    extent_data = workspace + "/scale_min.shp"
     result_path = workspace + "/result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)

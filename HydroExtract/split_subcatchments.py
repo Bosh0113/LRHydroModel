@@ -62,7 +62,7 @@ def split_geojson(workspace, geojson_path):
 
 
 if __name__ == '__main__':
-    base_path = r"G:\Graduation\Program\Figure\5.3_case\demo\preprocess1"
-    work_path = base_path + "/json"
-    geojson_file = base_path + "/ws.geojson"
+    base_path = r"G:\Graduation\Program\Figure\5.3_case\demo\slope_surface_lv12"
+    work_path = base_path + "/basins_geojson"
+    geojson_file = base_path + "/preprocess/basins_with_lakes.geojson"
     split_geojson(work_path, geojson_file)
