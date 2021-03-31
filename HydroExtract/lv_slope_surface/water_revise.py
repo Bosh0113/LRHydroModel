@@ -151,7 +151,7 @@ def water_revise_prepare(work_path, dem_tif_path, water_tif_path, extract_thresh
     rr.record_rivers(work_path, work_path + "/stream.tif", work_path + "/acc.tif")
 
     # 新建结果数据
-    water_copy_path = work_path + '/water_revised.tif'
+    water_copy_path = work_path + '/lake_revised.tif'
     cu.copy_tif_data(water_tif_path, water_copy_path)
 
     # 修正水体

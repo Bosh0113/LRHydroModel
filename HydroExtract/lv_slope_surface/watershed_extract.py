@@ -124,6 +124,6 @@ if __name__ == '__main__':
     base_path = "D:/Graduation/Program/Data/14/test_erase_watershed"
     workspace_path = base_path + "/process"
     watershed_extract(workspace_path, base_path + "/dem_fill.tif", base_path + "/dir.tif", base_path + "/acc.tif",
-                      base_path + "/stream.tif", base_path + "/water_slope_surface.tif")
+                      base_path + "/stream.tif", base_path + "/water_slope.tif")
     end = time.perf_counter()
     print('Run', end - start, 's')

@@ -22,7 +22,7 @@ def get_lake_upstream(shp_lake, dem_tif, dir_tif, acc_tif, temp_folder, basin_de
     # 获取上游及湖体范围
     sse.get_slope_surface(temp_folder, lake_tif_path, dir_tif_path, acc_tif_path, float('inf'))
     # 上游及湖体范围矢量化
-    wss_tif = temp_folder + '/water_slope_surface.tif'
+    wss_tif = temp_folder + '/water_slope.tif'
     wss_shp = basin_dems_folder + '/' + lake_index + '_wss.shp'
     rp.polygonize_to_shp(wss_tif, wss_shp)
     # 存储上游及湖体整体范围的dem数据

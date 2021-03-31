@@ -447,8 +447,8 @@ if __name__ == '__main__':
     workspace_path = base_path + "/process"
     if not os.path.exists(workspace_path):
         os.makedirs(workspace_path)
-    slope_data_path = workspace_path + "/water_slope_surface.tif"
-    route_data_path = workspace_path + "/slope_surface_route.tif"
+    slope_data_path = workspace_path + "/water_slope.tif"
+    route_data_path = workspace_path + "/slope_flow_path.tif"
 
     get_slope_surface(lake_data_path, dir_data_path, acc_data_path, slope_data_path, route_data_path, 100, -9)
     end = time.perf_counter()

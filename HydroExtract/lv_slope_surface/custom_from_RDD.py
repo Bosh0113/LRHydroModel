@@ -99,7 +99,7 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
 
     print("----------------------------------Get Revised Water----------------------------------")
     stage_time = time.perf_counter()
-    water_revised_path = process_path + "/water_revised.tif"
+    water_revised_path = process_path + "/lake_revised.tif"
     cu.copy_tif_data(lakes_tif, water_revised_path)
     # 修正湖泊/水库边界
     wr.water_revise(water_revised_path, river_tif, river_record, dir_tif)
@@ -110,7 +110,7 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     stage_time = time.perf_counter()
     # 提取坡面和湖泊/水库
     sse.get_slope_surface(process_path, water_revised_path, dir_tif, acc_tif, river_th, -9)
-    water_s_s_tif_path = process_path + "/water_slope_surface.tif"
+    water_s_s_tif_path = process_path + "/water_slope.tif"
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
 
@@ -149,7 +149,7 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     stage_time = time.perf_counter()
     w_w_surface_ds = gdal.Open(water_s_s_tif_path)
     no_data_value = w_w_surface_ds.GetRasterBand(1).GetNoDataValue()
-    cu.tif_reclassify(water_s_s_tif_path, result_path + "/slope_surface.tif",
+    cu.tif_reclassify(water_s_s_tif_path, result_path + "/slope.tif",
                       [[-99]], [int(no_data_value)])
     w_w_surface_ds = None
     over_time = time.perf_counter()

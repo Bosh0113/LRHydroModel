@@ -359,14 +359,14 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     # 创建坡面提取结果数据
     file_format = "GTiff"
     driver = gdal.GetDriverByName(file_format)
-    result_data_path = work_path + "/water_slope_surface.tif"
+    result_data_path = work_path + "/water_slope.tif"
     dataset_ol = driver.Create(result_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_dir.GetProjection())
     dataset_ol.GetRasterBand(1).SetNoDataValue(no_data_value)
 
     # 创建坡面流路结果数据
-    route_data_path = work_path + "/slope_surface_route.tif"
+    route_data_path = work_path + "/slope_flow_path.tif"
     dataset_ro = driver.Create(route_data_path, dataset_dir.RasterXSize, dataset_dir.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
     dataset_ro.SetGeoTransform(full_geotransform)
     dataset_ro.SetProjection(dataset_dir.GetProjection())
@@ -447,7 +447,7 @@ if __name__ == '__main__':
     # base_path = "D:/Graduation/Program/Data/14/process"
     workspace_path = base_path + "/result"
     # get_slope_surface(workspace_path, base_path + "/tashan_99.tif", base_path + "/dir.tif", base_path + "/acc.tif", 300000)
-    get_slope_surface(workspace_path, base_path + "/water_revised.tif", base_path + "/dir.tif", base_path + "/acc.tif",
+    get_slope_surface(workspace_path, base_path + "/lake_revised.tif", base_path + "/dir.tif", base_path + "/acc.tif",
                       300000)
     # for array in water_ol_bufs:
     #     print(array)

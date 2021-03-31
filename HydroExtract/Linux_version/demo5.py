@@ -87,7 +87,7 @@ def demo5(workspace_path, catalog_path, geojson_path, river_threshold):
     # 修正湖泊/水库边界
     print("----------------------------------Get Revised Water----------------------------------")
     stage_time = time.perf_counter()
-    water_revised_path = process_path + "/water_revised.tif"
+    water_revised_path = process_path + "/lake_revised.tif"
     cu.copy_tif_data(lakes_clip, water_revised_path)
     wr.water_revise(water_revised_path, river_tif_path, process_path + "/river_record.txt", dir_reclass_tif)
     over_time = time.perf_counter()
@@ -103,7 +103,7 @@ def demo5(workspace_path, catalog_path, geojson_path, river_threshold):
     # 提取子流域
     print("------------------------------------Get Watershed-----------------------------------")
     stage_time = time.perf_counter()
-    water_s_s_tif_path = process_path + "/water_slope_surface.tif"
+    water_s_s_tif_path = process_path + "/water_slope.tif"
     we.watershed_extract(process_path, dem_clip, dir_reclass_tif, acc_clip, river_tif_path, water_s_s_tif_path)
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
@@ -142,7 +142,7 @@ def demo5(workspace_path, catalog_path, geojson_path, river_threshold):
     stage_time = time.perf_counter()
     w_w_surface_ds = gdal.Open(water_s_s_tif_path)
     no_data_value = w_w_surface_ds.GetRasterBand(1).GetNoDataValue()
-    cu.tif_reclassify(water_s_s_tif_path, result_path + "/slope_surface.tif",
+    cu.tif_reclassify(water_s_s_tif_path, result_path + "/slope.tif",
                       [[-99]], [int(no_data_value)])
     w_w_surface_ds = None
     over_time = time.perf_counter()

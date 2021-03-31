@@ -220,6 +220,6 @@ if __name__ == '__main__':
     # base_path = "D:/Graduation/Program/Data/14/test_recode_ws_mpi"
     base_path = "D:/Graduation/Program/Data/15/result"
     watershed_recode(base_path + "/river_record.txt", base_path + "/watershed.tif", base_path + "/dir.tif",
-                     base_path + "/water_revised.tif")
+                     base_path + "/lake_revised.tif")
     end = time.perf_counter()
     print('Run', end - start, 's')

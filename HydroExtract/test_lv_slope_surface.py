@@ -43,12 +43,12 @@ if __name__ == '__main__':
         else:
             river_th = 2000000.0
         cfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
-        slope_surface_tif = temp_folder + '/result/slope_surface.tif'
-        lake_tif = temp_folder + '/result/water_revised.tif'
+        slope_surface_tif = temp_folder + '/result/slope.tif'
+        lake_tif = temp_folder + '/result/lake_revised.tif'
         pfaf_id = basins_geoj.split('.')[0]
-        slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
-        rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
-        lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
-        rp.polygonize_to_geojson(lake_tif, lake_geoj)
+        slope_surface_result = slope_surface_folder + '/' + pfaf_id + '.tif'
+        shutil.copy(slope_surface_tif, slope_surface_result)
+        lake_result = lake_folder + '/' + pfaf_id + '.tif'
+        shutil.copy(lake_tif, lake_result)
         # 删除临时文件夹
         shutil.rmtree(temp_folder)
