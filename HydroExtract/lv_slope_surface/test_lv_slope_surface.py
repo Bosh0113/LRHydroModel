@@ -35,7 +35,7 @@ lakes_area_thresholds = {
 if __name__ == '__main__':
     ws = '/disk1/workspace/20220729'
     error_basin_record = []
-    error_basin_filename = ws + '/error_basin_record.npy'
+    error_basin_filename = ws + '/error_basin_record0812.npy'
 
     basin_lvs = [7, 8, 9]
     for basin_lv in basin_lvs:
@@ -81,33 +81,33 @@ if __name__ == '__main__':
                 river_th = 100.0
             lakes_area_threshold = lakes_area_thresholds[basin_lv]
             # 处理流域内分类
-            # try:
-            #     basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
-            #     if basin_info:
-            #             slope_surface_tif = temp_folder + '/result/slope.tif'
-            #             lake_tif = temp_folder + '/process/lake_revised.tif'
-            #             pfaf_id = basins_geoj.split('.')[0]
-            #             slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
-            #             rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
-            #             lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
-            #             rp.polygonize_to_geojson(lake_tif, lake_geoj)
-            #     else:
-            #         shutil.copy(basins_geoj_path, no_lake_basin_folder + "/" + basins_geoj)
-            # except Exception as e:
-            #     print(e)
-            #     error_basin_record.append(basins_geoj_path)
-            basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
-            if basin_info:
-                    slope_surface_tif = temp_folder + '/result/slope.tif'
-                    lake_tif = temp_folder + '/process/lake_revised.tif'
-                    pfaf_id = basins_geoj.split('.')[0]
-                    slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
-                    rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
-                    lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
-                    rp.polygonize_to_geojson(lake_tif, lake_geoj)
-            else:
-                shutil.copy(basins_geoj_path, no_lake_basin_folder + "/" + basins_geoj)
+            try:
+                basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
+                if basin_info:
+                        slope_surface_tif = temp_folder + '/result/slope.tif'
+                        lake_tif = temp_folder + '/process/lake_revised.tif'
+                        pfaf_id = basins_geoj.split('.')[0]
+                        slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
+                        rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
+                        lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
+                        rp.polygonize_to_geojson(lake_tif, lake_geoj)
+                else:
+                    shutil.copy(basins_geoj_path, no_lake_basin_folder + "/" + basins_geoj)
+            except Exception as e:
+                print(e)
+                error_basin_record.append(basins_geoj_path)
+            # basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
+            # if basin_info:
+            #         slope_surface_tif = temp_folder + '/result/slope.tif'
+            #         lake_tif = temp_folder + '/process/lake_revised.tif'
+            #         pfaf_id = basins_geoj.split('.')[0]
+            #         slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
+            #         rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
+            #         lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
+            #         rp.polygonize_to_geojson(lake_tif, lake_geoj)
+            # else:
+            #     shutil.copy(basins_geoj_path, no_lake_basin_folder + "/" + basins_geoj)
             # 删除临时文件夹
             shutil.rmtree(temp_folder)
             # 存储处理过程有问题的流域
-            # numpy.save(error_basin_filename, error_basin_record)
+            numpy.save(error_basin_filename, error_basin_record)

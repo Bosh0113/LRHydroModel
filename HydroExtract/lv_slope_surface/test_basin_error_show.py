@@ -3,6 +3,7 @@ import os
 import numpy
 import geopyspark as gps
 from pyspark import SparkContext
+import test_custom_from_RDD as tcfR
 import raster_polygonize as rp
 import shutil
 # import pfafstetter_coding as pc
@@ -15,13 +16,13 @@ if __name__ == '__main__':
     basin_error_record = numpy.load(basin_error_record_filename)
     ws_folder = '/disk1/workspace/20220811/temp'
     for basin_error_idx in range(2, len(basin_error_record)):
+    # for basin_error_idx in range(3, 4):
         basins_geoj_filename = basin_error_record[basin_error_idx]
         basins_geoj = basins_geoj_filename.split('/')[len(basins_geoj_filename.split('/')) - 1]
         pfaf_id = basins_geoj.split('.')[0]
         temp_folder = os.path.join(ws_folder, pfaf_id)
         if not os.path.exists(temp_folder):
             os.makedirs(temp_folder)
-        import test_custom_from_RDD as tcfR
         tcfR.start_main(temp_folder, basins_geoj_filename, 10, 100.)
         slope_surface_tif = temp_folder + '/result/slope.tif'
         lake_tif = temp_folder + '/process/lake_revised.tif'

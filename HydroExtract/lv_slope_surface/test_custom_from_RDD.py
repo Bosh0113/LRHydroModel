@@ -19,9 +19,9 @@ import struct
 
 
 # RDD数据目录路径
-catalog_path = '/disk1/Data/hydro_system_dem/catalog'
+CATALOG_PATH = '/disk1/Data/hydro_system_dem/catalog'
 # 湖泊/水库范围边界数据路径
-o_lake_data = '/disk1/Data/hydro_system_dem/full_lakes/lakes_gt_10km2_full.shp'
+O_LAKE_DATA = '/disk1/Data/hydro_system_dem/full_lakes/lakes_gt_10km2_full.shp'
 
 
 # 获取栅格数据值(signed int)：数据集 x索引 y索引
@@ -86,9 +86,9 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     # cu.geojson_to_shp(geojson_path, extent_data)
     # # 提取兴趣范围内的湖泊/水库范围
     # lakes_shp = data_path + '/lakes_shp.shp'
-    # fl.filter_lakes_extent_area(o_lake_data, extent_data, lakes_shp, lakes_area)
+    # fl.filter_lakes_extent_area(O_LAKE_DATA, extent_data, lakes_shp, lakes_area)
     lakes_shp = data_path + '/lakes_shp.shp'
-    fls.clip_shp(geojson_path, o_lake_data, lakes_shp)
+    fls.clip_shp(geojson_path, O_LAKE_DATA, lakes_shp)
     if not os.path.exists(lakes_shp):
         print('************************** Not lake in the Basin! **************************')
         return 0
@@ -96,7 +96,7 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     print("----------------------------------Search Basic Data----------------------------------")
     stage_time = time.perf_counter()
     # 从RDD中获取兴趣范围内的基本数据
-    gdfr.get_basic_data(data_path, catalog_path, geojson_path)
+    gdfr.get_basic_data(data_path, CATALOG_PATH, geojson_path)
     # 得到的基本数据所在路径
     dem_tif = data_path + '/dem.tif'
     acc_tif = data_path + '/acc.tif'

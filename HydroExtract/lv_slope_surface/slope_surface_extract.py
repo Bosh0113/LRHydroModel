@@ -4,15 +4,13 @@ import os
 import time
 import common_utils as cu
 
-# 水体河道出入流处
-water_channel = []
-# 一像元宽水体外边界集合
-water_ol_bufs = []
+# # 水体河道出入流处
+# water_channel = []
 
-no_data_value = 0
-water_value = -99
-water_buffer_value = -1
-surface_route_value = 1
+NO_DATA_VALUE = 0
+WATER_VALUE = -99
+WATER_BUFFER_VALUE = -1
+SURFACE_ROUTE_VALUE = 1
 
 
 # 获取某点流向指向的点其在结果数据的值：x索引 y索引 某点流向指向的点其在结果数据的值(返回值)
@@ -20,7 +18,7 @@ def get_to_point_ol_data(xoff, yoff, dataset_dir, dataset_ol):
     dir_data_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
     to_point = cu.get_to_point(xoff, yoff, dir_data_value)
     if len(to_point) < 1:
-        return no_data_value
+        return NO_DATA_VALUE
     else:
         return cu.get_raster_int_value(dataset_ol, to_point[0], to_point[1])
 
@@ -38,9 +36,9 @@ def water_order(old_water_bufs, new_water_bufs, dataset_acc, dataset_ol):
         max_acc_point = water_buf[0]
         for point in water_buf:
             # 获得汇流累积量
-            print(dataset_ol.GetGeoTransform())
-            print(dataset_acc.GetGeoTransform())
             acc_point = cu.off_transform(point[0], point[1], dataset_ol, dataset_acc)
+            print("ol:", point)
+            print("acc:", acc_point)
             acc_value = cu.get_raster_float_value(dataset_acc, acc_point[0], acc_point[1])
             # 更新最大值记录
             if acc_value > max_acc:
@@ -110,14 +108,13 @@ def judge_from_water(xoff, yoff, dataset_dir, dataset_ol):
         dir_value = cu.get_raster_int_value(dataset_dir, point[0], point[1])
         to_point = cu.get_to_point(point[0], point[1], dir_value)
         ol_value = cu.get_raster_int_value(dataset_ol, point[0], point[1])
-        if ol_value == water_value and to_point[0] == xoff and to_point[1] == yoff:
+        if ol_value == WATER_VALUE and to_point[0] == xoff and to_point[1] == yoff:
             return 1
     return 0
 
 
 # 合并相邻坡面：某水体的上游外边界
 def surface_merge(upstream_inflow, new_slope_surface_id, dataset_ol, dataset_acc, dataset_dir, river_th):
-    # global dataset_ol, dataset_dir, water_value
     # 定义合并后的坡面分组
     slope_surface_unit = []
     # 遍历上游流入点对坡面与水体相交处的入流口分组
@@ -164,7 +161,7 @@ def surface_merge(upstream_inflow, new_slope_surface_id, dataset_ol, dataset_acc
                     if judge_in_data:
                         # 若不为水体则继续
                         ol_data = cu.get_raster_int_value(dataset_ol, point_x, point_y)
-                        if ol_data != water_value:
+                        if ol_data != WATER_VALUE:
                             # 若是当前点的上游点
                             dir_point = cu.off_transform(point_x, point_y, dataset_ol, dataset_dir)
                             dir_value = cu.get_raster_int_value(dataset_dir, dir_point[0], dir_point[1])
@@ -177,7 +174,6 @@ def surface_merge(upstream_inflow, new_slope_surface_id, dataset_ol, dataset_acc
 
 # 搜索外边界上间接入流的坡面像元：边界点x索引 边界点y索引 坡面id 水体的外边线 外边界线上的入流点集合
 def outline_upstream_search(xoff, yoff, water_buf, upstream_inflow, dataset_dir, dataset_ol):
-    # global dataset_dir, dataset_ol, water_value
     # 创建搜索数组
     search_inflows = [[xoff, yoff]]
     # 开始搜索
@@ -197,7 +193,7 @@ def outline_upstream_search(xoff, yoff, water_buf, upstream_inflow, dataset_dir,
                 # 判断是否在水体内
                 ol_data = cu.get_raster_int_value(dataset_ol, n_xoff, n_yoff)
                 # 若不在水体则继续
-                if ol_data != water_value:
+                if ol_data != WATER_VALUE:
                     dir_data_value = cu.get_raster_int_value(dataset_dir, n_xoff, n_yoff)
                     to_point = cu.get_to_point(n_xoff, n_yoff, dir_data_value)
                     if len(to_point) != 0:
@@ -223,12 +219,12 @@ def slope_surface_inflows(water_buf, upstream_inflows, dataset_dir, dataset_ol, 
         ol_data_value = cu.get_raster_int_value(dataset_ol, xoff, yoff)
         acc_off = cu.off_transform(xoff, yoff, dataset_ol, dataset_acc)
         acc_data_value = cu.get_raster_float_value(dataset_acc, acc_off[0], acc_off[1])
-        not_is_channel = ol_data_value == water_buffer_value and acc_data_value < river_th
+        not_is_channel = ol_data_value == WATER_BUFFER_VALUE and acc_data_value < river_th
         # 若为非河道出入流处
         if not_is_channel:
             # 判断是否指向水体
             to_point_data = get_to_point_ol_data(xoff, yoff, dataset_dir, dataset_ol)
-            judge_to_water = to_point_data == water_value
+            judge_to_water = to_point_data == WATER_VALUE
             # 若流向水体
             if judge_to_water:
                 # 记录为水体外边界上的直接入流点
@@ -265,7 +261,7 @@ def buffer_search(o_res_xoff, o_res_yoff, water_ol_buf, dataset_res, dataset_ol)
                 # 若在水体数据中进一步判断是否为水体内像元
                 if in_water_data:
                     data_value = cu.get_raster_int_value(dataset_res, res_xoff, res_yoff)
-                    not_in_water = data_value != water_value
+                    not_in_water = data_value != WATER_VALUE
                 else:
                     not_in_water = True
                 # 若不是水体像元且未记录则记录，即记录新边界点
@@ -273,13 +269,13 @@ def buffer_search(o_res_xoff, o_res_yoff, water_ol_buf, dataset_res, dataset_ol)
                     # 添加缓冲区数组记录
                     water_ol_buf.append([re_xoff, re_yoff])
                     # 标记为水体外边界
-                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_buffer_value)
+                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, WATER_BUFFER_VALUE)
                 # 判断是否在结果数据中记录水体
                 ol_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
-                recode_water = ol_data_value == water_value
+                recode_water = ol_data_value == WATER_VALUE
                 # 若是水体且未记录，则继续搜索
                 if not recode_water and not not_in_water:
-                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
+                    cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, WATER_VALUE)
                     water_points.append([res_xoff, res_yoff])
 
 
@@ -299,9 +295,9 @@ def get_surface_route(surface_route_start, dataset_ro, dataset_ol, dataset_acc, 
             # 获取此点在结果数据的值
             ol_value = cu.get_raster_int_value(dataset_ol, xoff, yoff)
             # 若流向的点不为水体且不为河道则继续
-            if ol_value != water_value and acc_value < river_th:
+            if ol_value != WATER_VALUE and acc_value < river_th:
                 # 记录此点为坡面流路
-                cu.set_raster_int_value(dataset_ro, xoff, yoff, surface_route_value)
+                cu.set_raster_int_value(dataset_ro, xoff, yoff, SURFACE_ROUTE_VALUE)
                 # 获取此点流向
                 dir_value = cu.get_raster_int_value(dataset_dir, xoff, yoff)
                 # 获取其流向的点
@@ -315,16 +311,18 @@ def get_surface_route(surface_route_start, dataset_ro, dataset_ol, dataset_acc, 
 
 # 清除边界线标记：某水体的外边界
 def clear_buffer(water_buf, dataset_ol):
-    # global water_buffer_value, no_data_value, dataset_ol
     for cell in water_buf:
         data_value = cu.get_raster_int_value(dataset_ol, cell[0], cell[1])
-        if data_value == water_buffer_value:
-            cu.set_raster_int_value(dataset_ol, cell[0], cell[1], no_data_value)
+        if data_value == WATER_BUFFER_VALUE:
+            cu.set_raster_int_value(dataset_ol, cell[0], cell[1], NO_DATA_VALUE)
 
 
 # 参数分别为：工作空间 水体数据 流向数据 汇流累积量数据 河系提取阈值 结果数据nodata（可选）
 def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, river_th, no_data=None):
+    global NO_DATA_VALUE
     print("Extract Start")
+    # 一像元宽水体外边界集合
+    water_ol_bufs = []
     if not os.path.exists(work_path):
         os.makedirs(work_path)
 
@@ -333,9 +331,9 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     dataset_acc = gdal.Open(acc_data_path)
 
     if no_data is not None:
-        no_data_value = no_data
+        NO_DATA_VALUE = no_data
     else:
-        no_data_value = int(dataset_res.GetRasterBand(1).GetNoDataValue())
+        NO_DATA_VALUE = int(dataset_res.GetRasterBand(1).GetNoDataValue())
     acc_geotransform = dataset_acc.GetGeoTransform()
 
     full_geotransform = acc_geotransform
@@ -347,14 +345,14 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
     dataset_ol = driver.Create(result_data_path, dataset_acc.RasterXSize, dataset_acc.RasterYSize, 1, gdal.GDT_Int32, options=['COMPRESS=DEFLATE'])
     dataset_ol.SetGeoTransform(full_geotransform)
     dataset_ol.SetProjection(dataset_acc.GetProjection())
-    dataset_ol.GetRasterBand(1).SetNoDataValue(no_data_value)
+    dataset_ol.GetRasterBand(1).SetNoDataValue(NO_DATA_VALUE)
 
     # 创建坡面流路结果数据
     route_data_path = work_path + "/slope_flow_path.tif"
     dataset_ro = driver.Create(route_data_path, dataset_acc.RasterXSize, dataset_acc.RasterYSize, 1, gdal.GDT_Int16, options=['COMPRESS=DEFLATE'])
     dataset_ro.SetGeoTransform(full_geotransform)
     dataset_ro.SetProjection(dataset_acc.GetProjection())
-    dataset_ro.GetRasterBand(1).SetNoDataValue(no_data_value)
+    dataset_ro.GetRasterBand(1).SetNoDataValue(NO_DATA_VALUE)
 
     print("Get lakes' outline...")
     for i in range(dataset_res.RasterYSize):
@@ -363,7 +361,7 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
             scan_value = cu.get_raster_int_value(dataset_res, j, i)
 
             # 若是水体内的像元
-            if scan_value == water_value:
+            if scan_value == WATER_VALUE:
                 # 计算水体数据的x,y坐标
                 off_point = cu.off_transform(j, i, dataset_res, dataset_ol)
                 re_xoff = off_point[0]
@@ -374,11 +372,11 @@ def get_slope_surface(work_path, res_data_path, dir_data_path, acc_data_path, ri
                     re_data_value = cu.get_raster_int_value(dataset_ol, re_xoff, re_yoff)
                     # 若未记录则继续
 
-                    if re_data_value != water_value:
+                    if re_data_value != WATER_VALUE:
                         # 新建数组用于记录此水体外边界
                         water_ol_buf = []
                         # 结果数据记录水体
-                        cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, water_value)
+                        cu.set_raster_int_value(dataset_ol, re_xoff, re_yoff, WATER_VALUE)
                         # 使用3*3区域生成水体外包围像元集
                         buffer_search(j, i, water_ol_buf, dataset_res, dataset_ol)
 
