@@ -1,15 +1,25 @@
 # coding=utf-8
 import os
 
-# TauDEM路径
-taudem_path = '/home/beichen/software/package/TauDEM-5.3.7/src/build'
+# 当前路径
+current_path = os.getcwd().replace("\\", "/")
+
+
+# 填洼：DEM(input) 填洼后的DEM(output)
+def pit_remove(dem_tif_path, dem_filled_path):
+    print("Pit Remove")
+    # cmd语句调用TauDEM的Pit Remove程序
+    dem_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/PitRemove -z ' + dem_tif_path + ' -fel ' + dem_filled_path
+    print(dem_cmd)
+    d = os.system(dem_cmd)
+    print(d)
 
 
 # 计算流向：DEM(input) 流向(output) 坡度(output)
 def d8_flow_directions(dem_tif_path, dir_tif_path, slope_output_path):
     print("D8 Flow Directions")
     # cmd语句调用TauDEM的D8 Flow Directions程序
-    dir_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/d8flowdir -fel ' + dem_tif_path + ' -p ' + \
+    dir_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/D8FlowDir -fel ' + dem_tif_path + ' -p ' + \
               dir_tif_path + ' -sd8 ' + slope_output_path
     print(dir_cmd)
     d = os.system(dir_cmd)
@@ -21,10 +31,10 @@ def d8_contributing_area(dir_tif_path, contributing_area_path, nc=0):
     print("D8 Contributing Area")
     # cmd语句调用TauDEM的D8 Contributing Area程序
     if nc == 0:
-        con_cmd = 'mpiexec -np ' + str(4) + ' ' + taudem_path + '/aread8 -p ' + dir_tif_path + ' -ad8 ' + \
+        con_cmd = 'mpiexec -np ' + str(4) + ' ' + current_path + '/TauDEM/AreaD8 -p ' + dir_tif_path + ' -ad8 ' + \
                   contributing_area_path + ' -nc'
     else:
-        con_cmd = 'mpiexec -np ' + str(4) + ' ' + taudem_path + '/aread8 -p ' + dir_tif_path + ' -ad8 ' + \
+        con_cmd = 'mpiexec -np ' + str(4) + ' ' + current_path + '/TauDEM/AreaD8 -p ' + dir_tif_path + ' -ad8 ' + \
                   contributing_area_path
     print(con_cmd)
     d = os.system(con_cmd)
@@ -35,7 +45,7 @@ def d8_contributing_area(dir_tif_path, contributing_area_path, nc=0):
 def grid_network(dir_tif_path, longest_upstream_path, total_upstream_path, str_order_acc_path):
     print("Grid Network")
     # cmd语句调用TauDEM的Stream Definition By Threshold程序
-    acc_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/gridnet -p ' + dir_tif_path + ' -plen ' + \
+    acc_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/GridNet -p ' + dir_tif_path + ' -plen ' + \
               longest_upstream_path + ' -tlen ' + total_upstream_path + ' -gord ' + str_order_acc_path
     print(acc_cmd)
     d = os.system(acc_cmd)
@@ -46,7 +56,7 @@ def grid_network(dir_tif_path, longest_upstream_path, total_upstream_path, str_o
 def stream_definition_by_threshold(total_upstream_path, str_tif_path, extract_threshold):
     print("Stream Definition By Threshold")
     # cmd语句调用TauDEM的Stream Definition By Threshold程序
-    str_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/threshold -ssa ' + total_upstream_path + \
+    str_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/Threshold -ssa ' + total_upstream_path + \
               ' -src ' + str_tif_path + ' -thresh ' + extract_threshold
     print(str_cmd)
     d = os.system(str_cmd)
@@ -59,7 +69,7 @@ def stream_reach_and_watershed(dem_tif_path, dir_tif_path, contributing_area_pat
                                str_tree_txt_path, str_coord_txt_path, str_shp_path, ws_tif_path):
     print("Stream Reach And Watershed")
     # cmd语句调用TauDEM的Stream Reach And Watershed程序
-    ws_cmd = 'mpiexec -n ' + str(5) + ' ' + taudem_path + '/streamnet -fel ' + dem_tif_path + ' -p ' + \
+    ws_cmd = 'mpiexec -n ' + str(5) + ' ' + current_path + '/TauDEM/StreamNet -fel ' + dem_tif_path + ' -p ' + \
              dir_tif_path + ' -ad8 ' + contributing_area_path + ' -src ' + str_tif_path + ' -ord ' + \
              str_order_path + ' -tree ' + str_tree_txt_path + ' -coord ' + str_coord_txt_path + ' -net ' + \
              str_shp_path + ' -w ' + ws_tif_path

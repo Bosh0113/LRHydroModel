@@ -2,9 +2,7 @@
 import os
 
 # TauDEM路径
-# taudem_path = '/usr/local/TauDEM/src/build'
-taudem_path = '/home/liujz/TauDEM/src/build'
-# taudem_path = '/share/home/liujunzhi/liujunzhi/TauDEM/src/build'
+taudem_path = '/home/beichen/software/package/TauDEM-5.3.7/src/build'
 
 
 # 计算流向：DEM(input) 流向(output) 坡度(output)

@@ -9,9 +9,9 @@ import split_subcatchments as ss
 import geojson_update_properties as gup
 
 # 基础数据
-total_dem_tif = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/dem.tif'
-total_dir_o_tif = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/dir_o.tif'
-total_acc_tif = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/acc.tif'
+total_dem_tif = '/disk1/workspace/20220726/dem.tif'
+total_dir_o_tif = '/disk1/workspace/20220726/dir.tif'
+total_acc_tif = '/disk1/workspace/20220726/acc.tif'
 river_th = 100.0
 
 
@@ -92,13 +92,19 @@ def start_pfaf_divide(current_level_folder, next_level_folder):
         else:
             # 直接复制到下一层级
             pafa_id = geoj.split('.')[0] + '1'
+            # 将pfaf_id更新到属性
+            properties = {
+                "DN": pafa_id,
+                "pfaf_id": pafa_id,
+            }
             n_path = next_level_folder + '/' + pafa_id + '.geojson'
             shutil.copy(geoj_path, n_path)
+            gup.geojson_update_properties(n_path, properties)
 
 
 if __name__ == '__main__':
-    workspace = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested'
-    for i in range(4, 5):
+    workspace = '/disk1/workspace/20220729/nested'
+    for i in range(5, 13):
         level_folder_path = workspace + '/lv' + str(i)
         next_level_folder_path = workspace + '/lv' + str(i + 1)
         if not os.path.exists(next_level_folder_path):

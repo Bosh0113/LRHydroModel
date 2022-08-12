@@ -5,12 +5,13 @@ from pyspark import SparkContext
 from shapely.geometry import MultiPolygon
 from shapely.geometry import Polygon
 
+conf = gps.geopyspark_conf(master="local[*]", appName="master")
+pysc = SparkContext(conf=conf)
+
 
 # 查询区域内数据: 数据目录路径 范围路径(GeoJSON) dem结果路径 流向结果路径 汇流累积量结果路径 湖泊/水库结果路径
 def data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_path, lake_tif_path):
 	catalog_path = "file://" + catalog_path
-	conf = gps.geopyspark_conf(master="local[*]", appName="master")
-	pysc = SparkContext(conf=conf)
 
 	polys = None
 	# Creates a MultiPolygon from Geojson
@@ -39,36 +40,34 @@ def data_search(catalog_path, json_path, dem_tif_path, dir_tif_path, acc_tif_pat
 			polys = Polygon(input_array)
 
 	print("Get DEM")
-	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="dem", layer_zoom=0, query_geom=polys)
+	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="hydro_dem", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
 	tiled_raster_layer.save_stitched(dem_tif_path)
 
 	print("Get Direction")
-	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="direction", layer_zoom=0, query_geom=polys)
-	# tiled_raster_layer = gps.query(uri=catalog_path, layer_name="dir", layer_zoom=0, query_geom=polys)
+	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="hydro_dir", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
 	tiled_raster_layer.save_stitched(dir_tif_path)
 
 	print("Get Accumulation")
-	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="accumulation", layer_zoom=0, query_geom=polys)
-	# tiled_raster_layer = gps.query(uri=catalog_path, layer_name="acc", layer_zoom=0, query_geom=polys)
+	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="hydro_acc", layer_zoom=0, query_geom=polys)
 	print(tiled_raster_layer.count())
 	print(tiled_raster_layer.layer_metadata.extent)
 	tiled_raster_layer.save_stitched(acc_tif_path)
 
-	print("Get Lakes")
-	tiled_raster_layer = gps.query(uri=catalog_path, layer_name="lakes", layer_zoom=0, query_geom=polys)
-	print(tiled_raster_layer.count())
-	print(tiled_raster_layer.layer_metadata.extent)
-	tiled_raster_layer.save_stitched(lake_tif_path)
+	# print("Get Lakes")
+	# tiled_raster_layer = gps.query(uri=catalog_path, layer_name="lakes", layer_zoom=0, query_geom=polys)
+	# print(tiled_raster_layer.count())
+	# print(tiled_raster_layer.layer_metadata.extent)
+	# tiled_raster_layer.save_stitched(lake_tif_path)
 
 
 if __name__ == '__main__':
-	workspace = "/usr/local/large_scale_hydro/Test/1"
-	catalog = '/usr/local/large_scale_hydro/catalog'
-	geojson_path = '/usr/local/large_scale_hydro/result/polygon.geojson'
+	workspace = "/disk1/workspace/20220726"
+	catalog = '/disk1/Data/hydro_system_dem/catalog'
+	geojson_path = '/disk1/workspace/20220726/case_range.json'
 	dem_result = workspace + '/dem.tif'
 	dir_result = workspace + '/dir.tif'
 	acc_result = workspace + '/acc.tif'

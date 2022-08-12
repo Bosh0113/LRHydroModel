@@ -1,26 +1,64 @@
 # coding=utf-8
 import os
 import time
+import slope_surface_extract as sse
 import get_data_from_RDD as gdfr
 import filter_lakes as fl
 import filter_lake_saga as fls
-import common_utils as cu
 import vector_rasterize as vr
 import river_extract as re
 import land_ocean as lo
 import river_add_final as raf
 import record_rivers as rr
 import water_revise as wr
-import slope_surface_extract as sse
 import watershed_extract as we
 import shutil
 import gdal
+import struct
+# import common_utils as cu
 
 
 # RDD数据目录路径
 catalog_path = '/disk1/Data/hydro_system_dem/catalog'
 # 湖泊/水库范围边界数据路径
 o_lake_data = '/disk1/Data/hydro_system_dem/full_lakes/lakes_gt_10km2_full.shp'
+
+
+# 获取栅格数据值(signed int)：数据集 x索引 y索引
+def get_raster_int_value(dataset, x, y):
+    return int.from_bytes(dataset.GetRasterBand(1).ReadRaster(x, y, 1, 1), 'little', signed=True)
+
+
+# 写入栅格数据值：数据集 x索引 y索引 值
+def set_raster_int_value(dataset, x, y, value):
+    dataset.GetRasterBand(1).WriteRaster(x, y, 1, 1, struct.pack("i", value))
+
+# 复制tif数据到新路径
+def copy_tif_data(old_path, copy_path):
+    old_ds = gdal.Open(old_path)
+    file_format = "GTiff"
+    driver = gdal.GetDriverByName(file_format)
+    copy_ds = driver.CreateCopy(copy_path, old_ds)
+    old_ds = None
+    copy_ds = None
+
+
+# 重分类：原数据路径 重分类数据路径 需要更新的像元值数组(二维数组) 新像元值数组(一维数组)
+def tif_reclassify(old_tif_path, updated_tif_path, update_value_2array, new_value_array):
+    old_ds = gdal.Open(old_tif_path)
+    file_format = "GTiff"
+    driver = gdal.GetDriverByName(file_format)
+    copy_ds = driver.CreateCopy(updated_tif_path, old_ds)
+    for j in range(copy_ds.RasterYSize):
+        for i in range(copy_ds.RasterXSize):
+            data_value = get_raster_int_value(copy_ds, i, j)
+            for k in range(0, len(update_value_2array), 1):
+                if data_value in update_value_2array[k]:
+                    new_value = new_value_array[k]
+                    set_raster_int_value(copy_ds, i, j, new_value)
+                    break
+    old_ds = None
+    copy_ds = None
 
 
 # 方法主入口： 数据存储路径 兴趣范围路径 湖泊/水库面积阈值 河网提取阈值
@@ -41,6 +79,19 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     result_path = work_path + '/result'
     if not os.path.exists(result_path):
         os.makedirs(result_path)
+    
+    print("------------------------------If the Basin has Lakes---------------------------------")
+    # 兴趣范围转为shp格式
+    # extent_data = process_path + '/extent.shp'
+    # cu.geojson_to_shp(geojson_path, extent_data)
+    # # 提取兴趣范围内的湖泊/水库范围
+    # lakes_shp = data_path + '/lakes_shp.shp'
+    # fl.filter_lakes_extent_area(o_lake_data, extent_data, lakes_shp, lakes_area)
+    lakes_shp = data_path + '/lakes_shp.shp'
+    fls.clip_shp(geojson_path, o_lake_data, lakes_shp)
+    if not os.path.exists(lakes_shp):
+        print('************************** Not lake in the Basin! **************************')
+        return 0
 
     print("----------------------------------Search Basic Data----------------------------------")
     stage_time = time.perf_counter()
@@ -56,14 +107,6 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
 
     print("-----------------------------------Get Lakes Data----------------------------------")
     stage_time = time.perf_counter()
-    # 兴趣范围转为shp格式
-    # extent_data = process_path + '/extent.shp'
-    # cu.geojson_to_shp(geojson_path, extent_data)
-    # # 提取兴趣范围内的湖泊/水库范围
-    # lakes_shp = data_path + '/lakes_shp.shp'
-    # fl.filter_lakes_extent_area(o_lake_data, extent_data, lakes_shp, lakes_area)
-    lakes_shp = data_path + '/lakes_shp.shp'
-    fls.clip_shp(geojson_path, o_lake_data, lakes_shp)
     # 将湖泊/水库栅格化同基本数据一致标准
     lakes_tif = process_path + '/lakes_99.tif'
     vr.lake_rasterize(lakes_shp, dir_tif, lakes_tif, -99, -9, 1)
@@ -100,7 +143,8 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     print("----------------------------------Get Revised Water----------------------------------")
     stage_time = time.perf_counter()
     water_revised_path = process_path + "/lake_revised.tif"
-    cu.copy_tif_data(lakes_tif, water_revised_path)
+    # cu.copy_tif_data(lakes_tif, water_revised_path)
+    copy_tif_data(lakes_tif, water_revised_path)
     # 修正湖泊/水库边界
     wr.water_revise(water_revised_path, river_tif, river_record, dir_tif)
     over_time = time.perf_counter()
@@ -139,7 +183,8 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     stage_time = time.perf_counter()
     river_ds = gdal.Open(river_tif)
     no_data_value = river_ds.GetRasterBand(1).GetNoDataValue()
-    cu.tif_reclassify(river_tif, result_path + "/stream.tif", [[0]], [int(no_data_value)])
+    # cu.tif_reclassify(river_tif, result_path + "/stream.tif", [[0]], [int(no_data_value)])
+    tif_reclassify(river_tif, result_path + "/stream.tif", [[0]], [int(no_data_value)])
     river_ds = None
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
@@ -149,8 +194,8 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     stage_time = time.perf_counter()
     w_w_surface_ds = gdal.Open(water_s_s_tif_path)
     no_data_value = w_w_surface_ds.GetRasterBand(1).GetNoDataValue()
-    cu.tif_reclassify(water_s_s_tif_path, result_path + "/slope.tif",
-                      [[-99]], [int(no_data_value)])
+    # cu.tif_reclassify(water_s_s_tif_path, result_path + "/slope.tif", [[-99]], [int(no_data_value)])
+    tif_reclassify(water_s_s_tif_path, result_path + "/slope.tif", [[-99]], [int(no_data_value)])
     w_w_surface_ds = None
     over_time = time.perf_counter()
     print("Run time: ", over_time - stage_time, 's')
@@ -158,6 +203,7 @@ def start_main(work_path, geojson_path, lakes_area, river_th):
     print("----------------------------------------Over----------------------------------------")
     end = time.perf_counter()
     print('Total time: ', end - start, 's')
+    return 1
 
 
 if __name__ == '__main__':

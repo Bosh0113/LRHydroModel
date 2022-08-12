@@ -18,8 +18,8 @@ def get_river(work_path, acc_tif_path, river_threshold):
 # 提取河网为tif
 if __name__ == '__main__':
     start = time.perf_counter()
-    base_path = "D:/Graduation/Program/Data/14/test_dir_acc"
+    base_path = r"/disk1/workspace/20220729"
     workspace_path = base_path + "/result"
-    get_river(workspace_path, base_path + "/acc.tif", 3000)
+    get_river(workspace_path, base_path + "/acc.tif", 100.0)
     end = time.perf_counter()
     print('Run', end - start, 's')

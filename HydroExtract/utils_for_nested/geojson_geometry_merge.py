@@ -33,8 +33,8 @@ def merge_geojson(merge_geojson, geojson_paths):
 
 
 if __name__ == '__main__':
-    workspace = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested'
-    for i in range(4, 13):
+    workspace = '/disk1/workspace/20220729/nested'
+    for i in range(5, 13):
         folder_path = workspace + '/lv' + str(i)
         merge_geojson_path = workspace + '/lv' + str(i) + '.geojson'
         geojsons = []

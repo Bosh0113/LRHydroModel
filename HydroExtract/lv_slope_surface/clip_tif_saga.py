@@ -2,10 +2,7 @@
 import os
 
 # 可执行文件所在路径
-# saga_cmd = r"D:\SoftWare\SAGA\saga_cmd"
-# saga_cmd = "/usr/local/bin/saga_cmd"
-# saga_cmd = "/share/home/liujunzhi/liujunzhi/saga/build/bin/saga_cmd"
-saga_cmd = "/home/liujz/saga-7.6.3/build/bin/saga_cmd"
+saga_cmd = "/home/beichen/software/opt/saga-7.6.3/bin/saga_cmd"
 
 # geojson裁剪tif: geojson路径 tif路径 结果路径
 def geojson_clip_tif(geojson_path, tif_path, result_path):

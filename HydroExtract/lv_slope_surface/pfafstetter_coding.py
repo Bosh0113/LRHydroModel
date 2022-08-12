@@ -1,7 +1,7 @@
 # coding=utf-8
 import time
 import rasterio
-import pyflwdir
+import pyflwdir     # 0.4.3
 from rasterio import crs
 
 

@@ -1,5 +1,6 @@
 # coding=utf-8
 import os
+# os.environ['PROJ_LIB'] = '/home/beichen/anaconda3/envs/master_research/lib/python3.7/site-packages/pyproj/proj_dir/share/proj'
 import time
 # import direction_reclassify as dr
 import dir_reclassify_saga as drs
@@ -40,17 +41,14 @@ def get_drainage(workspace, dem_tif, dir_tif, acc_tif):
 
 if __name__ == '__main__':
     start = time.perf_counter()
-    workspace_path = "D:/Graduation/Program/Data/25"
+    workspace_path = "/disk1/workspace/20220726"
     result_path = workspace_path + "/result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)
 
-    # dem_data = workspace_path + "/preprocess/dem_e.tif"
-    # dir_data = workspace_path + "/preprocess/dir_e.tif"
-    # acc_data = workspace_path + "/preprocess/acc_e.tif"
-    dem_data = workspace_path + "/preprocess/dem_i.tif"
-    dir_data = workspace_path + "/preprocess/dir_i.tif"
-    acc_data = workspace_path + "/preprocess/acc_i.tif"
+    dem_data = workspace_path + "/dem.tif"
+    dir_data = workspace_path + "/dir.tif"
+    acc_data = workspace_path + "/acc.tif"
 
     get_drainage(result_path, dem_data, dir_data, acc_data)
     end = time.perf_counter()

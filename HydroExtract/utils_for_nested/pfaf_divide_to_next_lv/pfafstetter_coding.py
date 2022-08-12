@@ -21,7 +21,8 @@ def get_pfafstetter_code(dir_d8_path, acc_path, pfaf_path, stream_th, level=1):
                                    'AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,'
                                    'AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG",'
                                    '"9122"]],AUTHORITY["EPSG","4326"]]')
-            pfaf = flw.pfafstetter(level, upstream_cells, stream_th)
+            pfaf = flw.pfafstetter(level, upstream_cells, stream_th)    # version <0.5
+            # pfaf = flw.subbasins_pfafstetter(level, upstream_cells, stream_th)
             # 判断是否有次分流域
             no_basin = 1
             for i in range(len(pfaf)):
