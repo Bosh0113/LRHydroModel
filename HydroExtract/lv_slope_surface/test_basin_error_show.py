@@ -12,24 +12,24 @@ conf = gps.geopyspark_conf(master="local[*]", appName="master")
 pysc = SparkContext(conf=conf)
 
 if __name__ == '__main__':
-    basin_error_record_filename = '/disk1/workspace/20220729/error_basin_record.npy'
+    basin_error_record_filename = '/disk1/workspace/20220729/error_basin_record0812.npy'
     basin_error_record = numpy.load(basin_error_record_filename)
     ws_folder = '/disk1/workspace/20220811/temp'
-    for basin_error_idx in range(2, len(basin_error_record)):
-    # for basin_error_idx in range(3, 4):
+    for basin_error_idx in range(len(basin_error_record)):
         basins_geoj_filename = basin_error_record[basin_error_idx]
-        basins_geoj = basins_geoj_filename.split('/')[len(basins_geoj_filename.split('/')) - 1]
-        pfaf_id = basins_geoj.split('.')[0]
-        temp_folder = os.path.join(ws_folder, pfaf_id)
-        if not os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
-        tcfR.start_main(temp_folder, basins_geoj_filename, 10, 100.)
-        slope_surface_tif = temp_folder + '/result/slope.tif'
-        lake_tif = temp_folder + '/process/lake_revised.tif'
-        slope_surface_geoj = temp_folder + '/' + pfaf_id + '_slope.geojson'
-        rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
-        lake_geoj = temp_folder + '/' + pfaf_id + '_lake.geojson'
-        rp.polygonize_to_geojson(lake_tif, lake_geoj)
+        print(basins_geoj_filename)
+        # basins_geoj = basins_geoj_filename.split('/')[len(basins_geoj_filename.split('/')) - 1]
+        # pfaf_id = basins_geoj.split('.')[0]
+        # temp_folder = os.path.join(ws_folder, pfaf_id)
+        # if not os.path.exists(temp_folder):
+        #     os.makedirs(temp_folder)
+        # tcfR.start_main(temp_folder, basins_geoj_filename, 10, 100.)
+        # slope_surface_tif = temp_folder + '/result/slope.tif'
+        # lake_tif = temp_folder + '/process/lake_revised.tif'
+        # slope_surface_geoj = temp_folder + '/' + pfaf_id + '_slope.geojson'
+        # rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
+        # lake_geoj = temp_folder + '/' + pfaf_id + '_lake.geojson'
+        # rp.polygonize_to_geojson(lake_tif, lake_geoj)
 
 
     # basins_geoj_filename = basin_error_record[3]
