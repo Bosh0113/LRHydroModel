@@ -37,8 +37,7 @@ if __name__ == '__main__':
     error_basin_record = []
     error_basin_filename = ws + '/error_basin_record0812.npy'
 
-    basin_lvs = [7, 8, 9]
-    for basin_lv in basin_lvs:
+    for basin_lv in range(7, 13):
         basin_lv = str(basin_lv)
 
         basins_folder = ws + '/nested/lv' + basin_lv
@@ -46,13 +45,13 @@ if __name__ == '__main__':
         slope_lake_folder = ws + '/slope_lake'
         slope_surface_folder = slope_lake_folder + '/lv' + basin_lv + '/slope_surface'
         lake_folder = slope_lake_folder + '/lv' + basin_lv + '/lake'
-        no_lake_basin_folder = slope_lake_folder + '/lv' + basin_lv + '/no_lake_basin'
+        basin_folder = slope_lake_folder + '/lv' + basin_lv + '/sub_basin'
         if not os.path.exists(slope_surface_folder):
             os.makedirs(slope_surface_folder)
         if not os.path.exists(lake_folder):
             os.makedirs(lake_folder)
-        if not os.path.exists(no_lake_basin_folder):
-            os.makedirs(no_lake_basin_folder)
+        if not os.path.exists(basin_folder):
+            os.makedirs(basin_folder)
 
         basins_geojs = os.listdir(basins_folder)
         # 遍历含有湖泊/水库的流域单元
@@ -73,40 +72,34 @@ if __name__ == '__main__':
             # 进行pfafstetter编码次分处理
             river_th = 100.0
             pfaf_1 = temp_folder + '/pfaf_1.tif'
-            no_sub_basin = pc.get_pfafstetter_code(dir_tif, acc_tif, pfaf_1, river_th)  # 1：不存在；0：存在
+            no_sub_basin = pc.get_pfafstetter_code(dir_tif, acc_tif, pfaf_1, river_th)  # 是否存在次级子流域：1：不存在；0：存在
             # 若没有次级划分
+            slope_th = 100.0
             if no_sub_basin:
-                river_th = 2000000.0
+                slope_th = 100.0
             else:
-                river_th = 100.0
+                slope_th = 2000000.0
             lakes_area_threshold = lakes_area_thresholds[basin_lv]
             # 处理流域内分类
             try:
-                basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
+                basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th, slope_th)
+                # 若存在湖泊
                 if basin_info:
                         slope_surface_tif = temp_folder + '/result/slope.tif'
                         lake_tif = temp_folder + '/process/lake_revised.tif'
+                        sub_basin_tif = temp_folder + '/result/watershed.tif'
                         pfaf_id = basins_geoj.split('.')[0]
                         slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
                         rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
                         lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
                         rp.polygonize_to_geojson(lake_tif, lake_geoj)
+                        sub_basin_geoj = basin_folder + '/' + pfaf_id + '.geojson'
+                        rp.polygonize_to_geojson(sub_basin_tif, sub_basin_geoj)
                 else:
-                    shutil.copy(basins_geoj_path, no_lake_basin_folder + "/" + basins_geoj)
+                    shutil.copy(basins_geoj_path, basin_folder + "/" + basins_geoj)
             except Exception as e:
                 print(e)
                 error_basin_record.append(basins_geoj_path)
-            # basin_info = tcfR.start_main(temp_folder, basins_geoj_path, lakes_area_threshold, river_th)
-            # if basin_info:
-            #         slope_surface_tif = temp_folder + '/result/slope.tif'
-            #         lake_tif = temp_folder + '/process/lake_revised.tif'
-            #         pfaf_id = basins_geoj.split('.')[0]
-            #         slope_surface_geoj = slope_surface_folder + '/' + pfaf_id + '.geojson'
-            #         rp.polygonize_to_geojson(slope_surface_tif, slope_surface_geoj)
-            #         lake_geoj = lake_folder + '/' + pfaf_id + '.geojson'
-            #         rp.polygonize_to_geojson(lake_tif, lake_geoj)
-            # else:
-            #     shutil.copy(basins_geoj_path, no_lake_basin_folder + "/" + basins_geoj)
             # 删除临时文件夹
             shutil.rmtree(temp_folder)
             # 存储处理过程有问题的流域

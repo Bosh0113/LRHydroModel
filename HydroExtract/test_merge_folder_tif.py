@@ -14,8 +14,16 @@ def merge_tif(merged_tif, folder):
 
 
 if __name__ == '__main__':
-    workspace = "/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/slope_surface/lv7"
-    merge_tif_path = workspace + "/lake_tif.tif"
-    input_folder = workspace + "/lake"
-    merge_tif(merge_tif_path, input_folder)
+    base_path = '/disk1/workspace/20220729'
+    lv_names = [7, 10]
+    for lv_name in lv_names:
+        merge_tif_path = base_path + "/RDD_tif/lake_lv" + str(lv_name) + ".tif"
+        input_folder = base_path + "/display_tif/lv" + str(lv_name) + "/lake"
+        merge_tif(merge_tif_path, input_folder)
+
+    for lv_name in range(7, 13):
+        for type in ['sub_basin', 'slope_surface']:
+            merge_tif_path = base_path + "/RDD_tif/" + type + "_lv" + str(lv_name) + ".tif"
+            input_folder = base_path + "/display_tif/lv" + str(lv_name) + "/" + type
+            merge_tif(merge_tif_path, input_folder)
 

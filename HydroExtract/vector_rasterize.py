@@ -37,7 +37,7 @@ def shp_geo_transform(tif_lt_point, cell_size, shp_extent):
 
 
 # lake的shp文件栅格化: shp文件路径 参考Raster文件路径 结果输出路径 结果范围参考(默认参考tif)
-def lake_rasterize(shp_path, raster_path, result_path, value, no_data, shp_ex=0):
+def shp_rasterize(shp_path, raster_path, result_path, value, no_data, shp_ex=0):
     print("Shapefile Rasterize.")
 
     ra_ds = gdal.Open(raster_path)
@@ -76,4 +76,4 @@ if __name__ == '__main__':
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     result_data = result_path + "/lakes_raster.tif"
-    lake_rasterize(shp_data, raster_data, result_data, -99, -9)
+    shp_rasterize(shp_data, raster_data, result_data, -99, -9)

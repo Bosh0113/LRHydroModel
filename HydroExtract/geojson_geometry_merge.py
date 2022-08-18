@@ -17,18 +17,23 @@ def merge_geojson(merge_geojson, geojson_paths):
 
     features = []
     for geojson_path in geojson_paths:
-        with open(geojson_path) as f:
-            js = json.load(f)
-            featureObj = {}
-            if js['type'] == 'FeatureCollection':
-                featureObj = js['features'][0]
-            elif js['type'] == 'Feature':
-                featureObj = js
-            if featureObj is not {}:
-                features.append(featureObj)
+        try:
+            with open(geojson_path) as f:
+                print(geojson_path)
+                js = json.load(f)
+                featureObj = {}
+                if js['type'] == 'FeatureCollection':
+                    featureObj = js['features'][0]
+                elif js['type'] == 'Feature':
+                    featureObj = js
+                if featureObj is not {}:
+                    features.append(featureObj)
+        except:
+            pass
     merge_json["features"] = features
 
     with open(merge_geojson, 'w') as f:
+        print(merge_geojson)
         f.write(json.dumps(merge_json))
 
 

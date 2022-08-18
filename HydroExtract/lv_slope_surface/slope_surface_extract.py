@@ -37,8 +37,6 @@ def water_order(old_water_bufs, new_water_bufs, dataset_acc, dataset_ol):
         for point in water_buf:
             # 获得汇流累积量
             acc_point = cu.off_transform(point[0], point[1], dataset_ol, dataset_acc)
-            print("ol:", point)
-            print("acc:", acc_point)
             acc_value = cu.get_raster_float_value(dataset_acc, acc_point[0], acc_point[1])
             # 更新最大值记录
             if acc_value > max_acc:
