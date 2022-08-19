@@ -1,0 +1,17 @@
+/home/beichen/software/opt/spark-2.4.7/bin/spark-submit --class geotrellis.spark.etl.MultibandIngest --master 'local[*]' --driver-memory 4G /home/beichen/software/package/geotrellis-3.0.0-M3/spark-etl/target/scala-2.11/geotrellis-spark-etl-assembly-3.0.0-M3.jar --input "file:///disk1/workspace/20220818/stream_100/input.json" --output "file:///disk1/workspace/20220818/stream_100/output.json" --backend-profiles "file:///disk1/workspace/20220818/stream_100/backend-profiles.json"
+
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo lake_gt_2km2
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo lake_gt_10km2
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo slope_surface_lv7
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo slope_surface_lv8
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo slope_surface_lv9
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo slope_surface_lv10
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo slope_surface_lv11
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo slope_surface_lv12
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo stream_100
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo sub_basin_lv7
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo sub_basin_lv8
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo sub_basin_lv9
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo sub_basin_lv10
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo sub_basin_lv11
+python3 rdd_tms_server.py /disk1/Data/hydro_system_display/case_demo sub_basin_lv12

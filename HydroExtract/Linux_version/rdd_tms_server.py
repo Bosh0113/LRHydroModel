@@ -27,9 +27,15 @@ def rdd_tms_server(catalog_path, resource_name):
     data_name = resource_name
 
     print("Color Setting")
+    # 子流域和坡面
     color_dict = {}
-    for i in range(120000):
+    for i in range(1000):
         color_dict[i] = int(random_color(), 16)
+    # # 河网
+    # color_dict = {1: int('0xffffff', 16)}
+    # # 湖泊
+    # color_dict = {1: int('0x0000c690', 16), 0: int('0xffffff00', 16)}
+
     cm = gps.ColorMap.build(color_dict)
 
     print('TMS Setting')
