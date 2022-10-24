@@ -60,13 +60,13 @@ def rgba_functions(color_map):
 
 
 # Color callback function
-def color_map(tiles):
-    print("Color Setting")
+def color_map_callback(tiles):
+   #  print("Color Setting")
 
-    basin_tile = numpy.array(tiles[0])
-    slope_tile = numpy.array(tiles[1])
-    lake_tile = numpy.array(tiles[2])
-    river_tile = numpy.array(tiles[3])
+    basin_tile = numpy.array(tiles[0].cells[0])
+    slope_tile = numpy.array(tiles[1].cells[0])
+    lake_tile = numpy.array(tiles[2].cells[0])
+    river_tile = numpy.array(tiles[3].cells[0])
     basin_max = basin_tile.max()
     slope_copy = numpy.copy(slope_tile)
     slope_copy[slope_copy>0] = 1
@@ -78,12 +78,19 @@ def color_map(tiles):
     map_display_tile[lake_tile == 1] = lake_display_value
     river_display_value = b_s_max + 2
     map_display_tile[river_tile == 1] = river_display_value
+    map_display_tile = map_display_tile.tolist()
 
     color_map = {}
     for i in range(b_s_max + 1):
         color_map[i] = random_color()
     color_map[lake_display_value] = '#0000C690'
     color_map[river_display_value] = '#FFFFFFFF'
+
+   #  map_display_tile = basin_tile + slope_tile + lake_tile + river_tile
+   #  map_display_tile = map_display_tile.tolist()
+   #  color_map = {}
+   #  for i in range(1000):
+   #      color_map[i] = random_color()
 
     (r, g, b, a) = rgba_functions(color_map)
     rgba = numpy.dstack([r(map_display_tile), g(map_display_tile), b(map_display_tile), a(map_display_tile)]).astype('uint8')
@@ -98,7 +105,14 @@ def rdd_tms_server(data_paths, port):
     pysc = SparkContext(conf=conf)
 
     print('TMS Setting')
-    tms = gps.TMS.build(source=data_paths, display=color_map)
+    pyramid_layers = []
+    for data_layers_idx in range(4):
+      data_layers = []
+      for zoom in range(0, 1):
+         data_layers.append(gps.query(uri=data_paths[data_layers_idx][0],layer_name=data_paths[data_layers_idx][1], layer_zoom=zoom))
+      pyramid_layer = gps.Pyramid(data_layers)
+      pyramid_layers.append(pyramid_layer)
+    tms = gps.TMS.build(source=pyramid_layers, display=color_map_callback)
 
     print('Set up TMS server')
     tms.bind(host="0.0.0.0", requested_port=port)
@@ -112,7 +126,7 @@ def rdd_tms_server(data_paths, port):
 
 if __name__ == '__main__':
     lv_no = 12   # 7-12
-    data_catalog_path = '/disk1/Data/hydro_system_display/case_demo'
+    data_catalog_path = 'file:////disk1/Data/hydro_system_display/case_demo'
     lake_data_name = 'lake_gt_10km2'
     if lv_no >= 9:
         lake_data_name = 'lake_gt_2km2'

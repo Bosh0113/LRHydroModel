@@ -68,6 +68,7 @@ lake_display_value = b_s_max + 1
 map_display_tile[lake_tile == 1] = lake_display_value
 river_display_value = b_s_max + 2
 map_display_tile[river_tile == 1] = river_display_value
+map_display_tile = map_display_tile.tolist()
 
 color_map = {}
 for i in range(b_s_max + 1):
