@@ -1,0 +1,27 @@
+Windows环境安装：
+源码下载（绿色版免安装）：
+https://sourceforge.net/projects/saga-gis/files/
+cmd调用：saga_cmd（文档：http://www.saga-gis.org/saga_tool_doc/index.html）
+
+Linux环境安装：
+直接安装：(sudo apt install saga)
+源码下载：
+http://saga-gis.sourceforge.net/en/
+参考：
+https://sourceforge.net/p/saga-gis/wiki/Compiling%20SAGA%20on%20Linux/
+
+可能遇到的问题：
+./configure无法找到已安装环境：增加环境变量/直接在configure文件内修改对应路径
+make无法找到安装环境：同上
+make时出现无法打开header文件错误：可能是缺少编译环境，例无法打开<sql.h>是缺失unixODBC
+(sudo apt-get install -y unixodbc-dev)
+
+调用程序：
+毕业服务器：
+/usr/local/bin/saga_cmd
+刘老师服务器：
+/home/liujz/saga-7.6.3/build/bin/saga_cmd
+院集群服务器：
+/share/home/liujunzhi/liujunzhi/saga/build/bin/saga_cmd
+
+saga_cmd shapes_grid 7 -INPUT /disk1/workspace/20220726/dir.tif -OUTPUT /disk1/workspace/20220729/nested/lv6/temp/dir.tif -POLYGONS /disk1/workspace/20220729/nested/lv5/43430.geojson

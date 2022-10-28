@@ -1,0 +1,19 @@
+-启动hadoop:
+cd /home/beichen/software/opt/hadoop-2.7.1/sbin
+./start-all.sh
+
+-启动spark:
+cd /home/beichen/software/opt/spark-2.4.7/sbin
+./start-all.sh
+
+-启动geotrellis的mapserver:
+cd /home/beichen/workspace/Git/LRHydroModel/HydroExtract/Linux_version
+conda activate master_research
+# python3 rdd_tms_server.py [数据目录路径] [导入数据名称]
+python3 rdd_tms_server_custom.py
+(适当注释代码，以显示不同类型数据)
+
+-启动geoserver:
+cd /home/beichen/software/opt/geoserver-2.21.1/bin
+./startup.sh
+(usr: admin / pwd: geoserver

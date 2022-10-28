@@ -1,0 +1,73 @@
+Windows环境安装：
+官网：https://hydrology.usu.edu/taudem/taudem5/index.html
+下载：https://hydrology.usu.edu/taudem/taudem5/downloads.html
+注意：exe调用需要先安装TauDEM桌面端程序（会自动安装依赖环境）
+
+Linux环境安装:
+!!!!尤其注意版本问题!!!!
+TauDEM源码下载：https://github.com/dtarb/TauDEM
+
+提前装好gcc(本处使用7.5.0)、gcc-c++、cmake、clang
+(./configure --prefix=/home/beichen/software/opt/gcc-7.5.0 --with-gmp=/home/beichen/software/opt/gmp-6.2.1 --with-mpfr=/home/beichen/software/opt/mpfr-4.1.0 --with-mpc=/home/beichen/software/opt/mpc-1.2.1 --disable-multilib --enable-language=c,c++ --disable-libsanitizer --disable-libcilkrts)
+
+安装Boost(推荐手动安装到默认路径):
+https://www.cnblogs.com/huliangwen/p/5424033.html
+
+安装GMP(推荐手动安装到默认路径):
+http://blog.sina.com.cn/s/blog_15d0344a30102xjys.html
+
+安装MPFR(推荐手动安装到默认路径):
+http://blog.sina.com.cn/s/blog_15d0344a30102xjyw.html
+
+安装CGAL(推荐手动安装到默认路径)(gcc4.8只支持编译5.0以下版本):
+https://github.com/CGAL/cgal/releases/tag/releases%2FCGAL-5.0
+[用于指定版本：$ cmake -DCMAKE_C_COMPILER=/usr/local/bin/gcc -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ -DCGAL_HEADER_ONLY=OFF -DCMAKE_BUILD_TYPE=Release .]
+[cmake -DCMAKE_C_COMPILER=/home/beichen/software/opt/gcc-7.5.0/bin/gcc -DCMAKE_CXX_COMPILER=/home/beichen/software/opt/gcc-7.5.0/bin/g++ -DCMAKE_INSTALL_PREFIX=/home/beichen/software/opt/CGAL-5.0 -DCGAL_HEADER_ONLY=OFF -DCMAKE_BUILD_TYPE=Release .]
+$ cmake -DCGAL_HEADER_ONLY=OFF -DCMAKE_BUILD_TYPE=Release .
+$ make
+$ make install
+
+安装SFCGAL(推荐手动安装到默认路径):
+https://github.com/Oslandia/SFCGAL/releases/tag/v1.3.8
+$ cmake -DCMAKE_INSTALL_PREFIX=/home/beichen/software/opt/SFCGAL-1.3.8 .
+若出现警告，在CMakeList.txt加一句：cmake_policy(SET CMP<NNNN> OLD) //NNNN根据提示填写
+（指定安装路径：cmake -DCMAKE_INSTALL_PREFIX=/install/directory .）
+$ make
+$ make install
+
+安装GDAL(推荐手动安装到默认路径):
+[指定编译器：在环境变量中增加CC=/usr/local/bin/gcc和CXX=/usr/local/bin/g++并export]
+[./configure --prefix=/home/beichen/software/opt/gdal-2.3.0]
+[make CC=/home/beichen/software/opt/gcc-9.5.0/bin/gcc CXX=/home/beichen/software/opt/gcc-9.5.0/bin/g++]
+chmod +x ./GDAL.sh
+./GDAL.sh
+(在此基础上python安装此gdal，参考：https://blog.csdn.net/weixin_30411997/article/details/95653810)
+
+安装MPI(推荐手动安装到默认路径):
+chmod +x ./MPICH2.sh
+./MPICH2.sh
+
+安装TauDEM:
+cd src
+mkdir build
+cd build
+cmake ..
+(若找不到安装好的GDAL等环境，在CMakeCache.txt对应修改)
+make
+make install
+
+测试TauDEM:
+mpiexec -n 5 ./../d8flowdir -fel loganfel.tif -p loganp.tif -sd8 logansd8.tif
+
+总结：
+-使用GDAL MPI 默认路径安装成功(也可以注意在环境变量及编译配置文件里指定好路径)
+-注意nc-config环境(https://stackoverflow.com/questions/42891050/install-ncdf4-package-error-nc-config-not-found-or-not-executable)
+-使用cmake注意建立子文件夹再cmake ..
+
+最后安装位置：
+OGMS: /usr/local/TauDEM/src/build
+Liu: /home/liujz/TauDEM/src/build
+院集群：/share/home/liujunzhi/liujunzhi/TauDEM/src/build
+
+备注：
+-集群无法调用解决：环境变量添加：export I_MPI_HYDRA_TOPOLIB=ipl

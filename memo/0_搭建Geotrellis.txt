@@ -1,0 +1,140 @@
+搭建空间数据库
+
+硬件环境：
+CPU 4 | RAM 8G | HDD 1T
+
+系统环境：
+Ubuntu linux(x64)
+
+软件环境(需要版本对应)：
+Java 1.8
+配置参考：https://www.cnblogs.com/zeze/p/5902124.html
+Hadoop 2.7.1
+配置参考：http://dblab.xmu.edu.cn/blog/install-hadoop/
+(启动的时候找不到JAVA_HOME：在hadoop-env.sh中手动添加路径)
+Spark 2.4.7
+配置参考：http://dblab.xmu.edu.cn/blog/1307-2/
+(报slf4j错误时在spark-env.sh中添加：export SPARK_DIST_CLASSPATH=$(/usr/local/hadoop/bin/hadoop classpath))
+Scala 2.11.12
+配置参考：https://blog.csdn.net/lbq15735104044/article/details/94394086
+sbt 1.1.2
+(Geotrellis自带，免安装)
+
+地理数据引擎：
+GeoTrellis v3.0.0-M3
+官方网址：https://geotrellis.io/
+Git网址：https://github.com/locationtech/geotrellis
+安装参考：
+https://blog.csdn.net/lbq15735104044/article/details/84959371
+GeoPySpark v0.4.3
+官方网址：https://geopyspark.readthedocs.io/en/latest/index.html
+安装(python3环境)
+pip3 install geopyspark
+geopyspark install-jar
+
+Geotrellis数据导入测试：
+(文档：
+https://geotrellis.readthedocs.io/en/latest/tutorials/etl-tutorial.html
+https://geotrellis.readthedocs.io/en/latest/guide/etl.html)
+先创建三个json配置文档，示例：
+input.json：
+[{
+    "format": "multiband-geotiff",
+    "name": "demo-dem",
+    "cache": "NONE",
+    "backend": {
+        "type": "hadoop",
+        "path": "file:///usr/data/demo_dem"
+    },
+    "crs": "EPSG:4326"
+}]
+output.json：
+{
+    "backend": {
+        "type": "file",
+        "path": "/usr/local/large_scale_hydro/catalog"
+    },
+    "reprojectMethod": "buffered",
+    "pyramid": false,
+    "tileSize": 256,
+    "keyIndexMethod": {
+        "type": "zorder"
+    },
+    "resampleMethod": "nearest-neighbor",
+    "layoutScheme": "floating",
+    "crs": "EPSG:4326"
+}
+backend-profiles.json：
+{
+    "backend-profiles": []
+}
+
+然后执行：
+/usr/local/spark/bin/spark-submit --class geotrellis.spark.etl.MultibandIngest --master 'local[*]' --driver-memory 4G /usr/local/large_scale_hydro/geotrellis-spark-etl-assembly-3.0.0-M3.jar --input "file:///usr/local/large_scale_hydro/json/input.json" --output "file:///usr/local/large_scale_hydro/json/output.json" --backend-profiles "file:///usr/local/large_scale_hydro/json/backend-profiles.json"
+
+/home/beichen/software/opt/spark-2.4.7/bin/spark-submit --class geotrellis.spark.etl.MultibandIngest --master 'local[*]' --driver-memory 4G /home/beichen/software/package/geotrellis-3.0.0-M3/spark-etl/target/scala-2.11/geotrellis-spark-etl-assembly-3.0.0-M3.jar --input "file:///disk1/workspace/20220818/stream_100/input.json" --output "file:///disk1/workspace/20220818/stream_100/output.json" --backend-profiles "file:///disk1/workspace/20220818/stream_100/backend-profiles.json"
+GeoPySpark导入测试：
+代码示例：
+import geopyspark as gps
+from pyspark import SparkContext
+from shapely.geometry import box
+
+
+def test():
+	conf = gps.geopyspark_conf(master="local[*]", appName="master")
+	pysc = SparkContext(conf=conf)
+	spatial_raster_layer = gps.geotiff.get(layer_type=gps.LayerType.SPATIAL, uri="file:///usr/local/large_scale_hydro/demo/cropped.tif")
+	spatial_tiled_layer = spatial_raster_layer.tile_to_layout(layout=gps.GlobalLayout(), target_crs=3857)
+	spatial_tiled_layer.zoom_level = 11
+	gps.write(uri='file:///usr/local/large_scale_hydro/demo', layer_name='demo-tif', tiled_raster_layer=spatial_tiled_layer)
+
+
+if __name__ == '__main__':
+	test()
+	
+渲染的数据导入RDD:
+同数据存储，但output.json文件中: {"pyramid": true, "layoutScheme": "zoomed", "crs":"EPSG:3857"}
+
+
+数据查询保存示例：
+import geopyspark as gps
+from pyspark import SparkContext
+from shapely.geometry import box
+
+
+def test():
+	conf = gps.geopyspark_conf(master="local[*]", appName="master")
+	pysc = SparkContext(conf=conf)
+	layer_metadata = gps.read_layer_metadata(uri="file:///usr/local/large_scale_hydro/demo", layer_name="demo-tif", layer_zoom=0)
+	layer_extent = layer_metadata.extent
+	print(layer_extent)
+	poly = box(layer_extent.xmin + 200000, layer_extent.ymin + 200000, layer_extent.xmax - 200000, layer_extent.ymax - 200000)
+	tiled_raster_layer = gps.query(uri="file:///usr/local/large_scale_hydro/demo", layer_name="demo-tif", layer_zoom=0, query_geom=poly)
+	print(tiled_raster_layer.count())
+	print(tiled_raster_layer.layer_metadata.extent)
+	tiled_raster_layer.save_stitched('/usr/local/large_scale_hydro/result/result.tif')
+
+
+if __name__ == '__main__':
+	test()
+
+当前存在问题：
+1) GeoPySpark批量导入内存不够，可用scala版本的命令行导入
+2) 读取范围选择阈值问题
+
+其他问题：
+1) LandCover数据直接导入，数组报错：原始数据重新导出成tif解决
+2) 数据过大无法导入，用GDAL将大数据切片(使用分级前的分割结果;-co参数可参考：https://gdal.org/drivers/raster/gtiff.html#raster-gtiff)：
+gdal_retile.py -ps 6000 6000 -co "COMPRESS=DEFLATE" -s_srs EPSG:4326 -targetDir /usr/data/HydroLakes/data /usr/data/HydroLakes/gl_9_LZW.tif
+3) 压缩tif无法导入：可用2中切片方式分块后导入
+4) 若出现maxResultSize问题，则spark-submit时添加参数--conf spark.driver.maxResultSize=3g
+5) 临时文件路径内存不足：
+（参考：https://blog.csdn.net/bdchome/article/details/45396979）
+修改spark执行时临时目录的配置，在 conf 目录下的spark-defaults.conf的配置文件，增加如下一行：
+spark.local.dir /diskb/sparktmp,/diskc/sparktmp,/diskd/sparktmp,/diske/sparktmp,/diskf/sparktmp,/diskg/sparktmp
+说明：可配置多个目录，以 "," 分隔。
+
+
+相关论文：
+硕士论文：
+[1]李聪仁. 基于Geotrellis的遥感影像数据存储与检索模型设计与实现[D].云南师范大学,2018.

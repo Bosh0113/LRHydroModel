@@ -59,40 +59,49 @@ def rgba_functions(color_map):
    return (numpy.vectorize(r), numpy.vectorize(g), numpy.vectorize(b), numpy.vectorize(a))
 
 
+no_display_value = 0
+lake_display_value = -1
+river_display_value = -2
+slope_display_value = -3
+COLOR_MAP = {}
+for i in range(12000):
+   COLOR_MAP[i] = random_color()
+COLOR_MAP[no_display_value] = '#FFFFFF00'
+COLOR_MAP[lake_display_value] = '#0000C690'
+COLOR_MAP[river_display_value] = '#FFFFFFFF'
+COLOR_MAP[slope_display_value] = '#00FFFF90'
+
+
 # Color callback function
 def color_map_callback(tiles):
    #  print("Color Setting")
-
     basin_tile = numpy.array(tiles[0].cells[0])
     slope_tile = numpy.array(tiles[1].cells[0])
     lake_tile = numpy.array(tiles[2].cells[0])
     river_tile = numpy.array(tiles[3].cells[0])
-    basin_max = basin_tile.max()
-    slope_copy = numpy.copy(slope_tile)
-    slope_copy[slope_copy>0] = 1
-    slope_plus = slope_copy*basin_max
-    slope_new = slope_tile + slope_plus
+
+    basin_tile[basin_tile<=0] = no_display_value
+    slope_tile[slope_tile<=0] = no_display_value
+    lake_tile[lake_tile<=0] = no_display_value
+    river_tile[river_tile<=0] = no_display_value
+
+   #  # colorful slope
+   #  basin_max = basin_tile.max()
+   #  slope_copy = numpy.copy(slope_tile)
+   #  slope_copy[slope_copy>0] = 1
+   #  slope_plus = slope_copy*basin_max
+   #  slope_new = slope_tile + slope_plus
+
+    # single color slope
+    slope_new = numpy.copy(slope_tile)
+    slope_new[slope_new>0] = slope_display_value
+
     map_display_tile = basin_tile + slope_new
-    b_s_max = map_display_tile.max()
-    lake_display_value = b_s_max + 1
     map_display_tile[lake_tile == 1] = lake_display_value
-    river_display_value = b_s_max + 2
     map_display_tile[river_tile == 1] = river_display_value
     map_display_tile = map_display_tile.tolist()
 
-    color_map = {}
-    for i in range(b_s_max + 1):
-        color_map[i] = random_color()
-    color_map[lake_display_value] = '#0000C690'
-    color_map[river_display_value] = '#FFFFFFFF'
-
-   #  map_display_tile = basin_tile + slope_tile + lake_tile + river_tile
-   #  map_display_tile = map_display_tile.tolist()
-   #  color_map = {}
-   #  for i in range(1000):
-   #      color_map[i] = random_color()
-
-    (r, g, b, a) = rgba_functions(color_map)
+    (r, g, b, a) = rgba_functions(COLOR_MAP)
     rgba = numpy.dstack([r(map_display_tile), g(map_display_tile), b(map_display_tile), a(map_display_tile)]).astype('uint8')
     img = Image.fromarray(rgba, mode='RGBA')
 
@@ -108,7 +117,7 @@ def rdd_tms_server(data_paths, port):
     pyramid_layers = []
     for data_layers_idx in range(4):
       data_layers = []
-      for zoom in range(0, 1):
+      for zoom in range(0, 12):
          data_layers.append(gps.query(uri=data_paths[data_layers_idx][0],layer_name=data_paths[data_layers_idx][1], layer_zoom=zoom))
       pyramid_layer = gps.Pyramid(data_layers)
       pyramid_layers.append(pyramid_layer)
@@ -126,7 +135,7 @@ def rdd_tms_server(data_paths, port):
 
 if __name__ == '__main__':
     lv_no = 12   # 7-12
-    data_catalog_path = 'file:////disk1/Data/hydro_system_display/case_demo'
+    data_catalog_path = 'file:////disk1/Data/hydro_system_display/mapping_catalog'
     lake_data_name = 'lake_gt_10km2'
     if lv_no >= 9:
         lake_data_name = 'lake_gt_2km2'

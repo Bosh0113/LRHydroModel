@@ -23,7 +23,7 @@ def rdd_tms_server(catalog_path, resource_name):
     pysc = SparkContext(conf=conf)
 
     print("Tiles Catalog Path")
-    catalog_path = "file://" + catalog_path
+    catalog_path = "file:///" + catalog_path
     data_name = resource_name
 
     print("Color Setting")
@@ -54,4 +54,6 @@ def rdd_tms_server(catalog_path, resource_name):
 if __name__ == '__main__':
     p1 = sys.argv[1]
     p2 = sys.argv[2]
+    # p1 = '/disk1/Data/hydro_system_display/mapping_catalog'
+    # p2 = 'sub_basin_lv12'
     rdd_tms_server(p1, p2)
