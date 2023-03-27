@@ -2,9 +2,7 @@
 import os
 
 # TauDEM路径
-taudem_path = '/usr/local/TauDEM/src/build'
-# taudem_path = '/home/liujz/TauDEM/src/build'
-# taudem_path = '/share/home/liujunzhi/liujunzhi/TauDEM/src/build'
+taudem_path = '/home/beichen/software/package/TauDEM-5.3.7/src/build'
 
 
 # 填洼：DEM(input) 填洼后的DEM(output)

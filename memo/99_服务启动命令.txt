@@ -16,6 +16,7 @@ python3 rdd_tms_server_custom.py
 -启动geoserver:
 cd /home/beichen/software/opt/geoserver-2.21.1/bin
 ./startup.sh
+http://localhost:8070/geoserver
 (usr: admin / pwd: geoserver)
 
 -启动mongodb:

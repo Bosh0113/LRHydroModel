@@ -16,6 +16,8 @@ import shutil
 import gdal
 import struct
 import common_utils as cu
+import geopyspark as gps
+from pyspark import SparkContext
 
 # RDD数据目录路径
 CATALOG_PATH = '/disk1/Data/hydro_system_dem/catalog'
@@ -175,8 +177,11 @@ def start_main(work_path, geojson_path, lakes_area, river_th, slope_th):
 
 
 if __name__ == '__main__':
-    workspace = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/slope_surface'
-    extent_geojson = '/home/liujz/data/Large_Scale_Watershed/Test/case5.3/nested/slope_surface/basin.geojson'
+    conf = gps.geopyspark_conf(master="local[*]", appName="master")
+    pysc = SparkContext(conf=conf)
+
+    workspace = '/disk1/other_ws/basin_lake_ws/20230327'
+    extent_geojson = workspace + '/basin.geojson'
     lakes_area_threshold = 10
-    river_threshold = 10.0
-    start_main(workspace, extent_geojson, lakes_area_threshold, river_threshold)
+    river_threshold = 5
+    start_main(workspace, extent_geojson, lakes_area_threshold, river_threshold, river_threshold)
