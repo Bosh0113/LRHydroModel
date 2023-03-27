@@ -137,8 +137,8 @@ if __name__ == '__main__':
     lv_no = 12   # 7-12
     data_catalog_path = 'file:////disk1/Data/hydro_system_display/mapping_catalog'
     lake_data_name = 'lake_gt_10km2'
-    if lv_no >= 9:
+    if lv_no >= 10:
         lake_data_name = 'lake_gt_2km2'
     display_data_paths = [(data_catalog_path, 'sub_basin_lv' + str(lv_no)), (data_catalog_path, 'slope_surface_lv' + str(lv_no)), (data_catalog_path, lake_data_name), (data_catalog_path, 'stream_100')]
-    port_int = 8051
+    port_int = 8000 + lv_no
     rdd_tms_server(display_data_paths, port_int)
