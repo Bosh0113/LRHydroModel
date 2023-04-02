@@ -4,7 +4,7 @@ import geopyspark as gps
 from pyspark import SparkContext
 import clip_tif_saga as cts
 import pfafstetter_coding as pc
-import test_custom_from_RDD as tcfR
+import tool_custom_from_RDD as tcfR
 import shutil
 import raster_polygonize as rp
 import numpy
